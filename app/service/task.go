@@ -47,11 +47,15 @@ func (t TaskCreateRequest) MakeCreate() (*model.Task, error) {
 
 type TaskPageRequest struct {
 	service.BasePageRequest
+	ParentId *uint `json:"parent_id" form:"parent_id"`
 }
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("parent_id=?", 0)
+		if r.ParentId == nil {
+			return db
+		}
+		return db.Where("parent_id=?", *r.ParentId)
 	}
 }
 

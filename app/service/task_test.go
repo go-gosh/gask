@@ -92,7 +92,7 @@ func (t *_testTaskSuite) Test_Paginate_NoRootTask() {
 	t.Len(body.Data, 0)
 }
 
-func (t *_testTaskSuite) Test_Paginate_DefaultRootTaskWhenJustFillData() {
+func (t *_testTaskSuite) Test_Paginate_DefaultTaskWhenJustFillData() {
 	data := t.addRootData(service.DefaultPageLimit)
 
 	w := httptest.NewRecorder()
@@ -114,6 +114,73 @@ func (t *_testTaskSuite) Test_Paginate_DefaultRootTaskWhenJustFillData() {
 		taskStr, err := json.Marshal(data[i])
 		t.NoError(err)
 		t.EqualValues(taskStr, v)
+	}
+}
+
+func (t *_testTaskSuite) Test_Paginate_SubTaskWhenHasData() {
+	roots := make([]model.Task, 0, 10)
+	for i := 0; i < 10; i++ {
+		root := t.addData(i, 0)
+		root.SubTask = make([]model.Task, 0, 10)
+		for j := 0; j < 9; j++ {
+			root.SubTask = append(root.SubTask, t.addData(i*10+j, root.ID))
+		}
+		roots = append(roots, root)
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=31", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
+	body := struct {
+		StartId int               `json:"start_id"`
+		Limit   int               `json:"limit"`
+		More    bool              `json:"more"`
+		Data    []json.RawMessage `json:"data"`
+	}{}
+	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+	t.EqualValues(0, body.StartId)
+	t.EqualValues(service.DefaultPageLimit, body.Limit)
+	t.EqualValues(false, body.More)
+	t.Len(body.Data, 9)
+	for i, v := range body.Data {
+		taskStr, err := json.Marshal(roots[3].SubTask[i])
+		t.NoError(err)
+		t.EqualValuesf(taskStr, v, "%s - %s", taskStr, v)
+	}
+}
+
+func (t *_testTaskSuite) Test_Paginate_RootTaskWhenHasData() {
+	roots := make([]model.Task, 0, 10)
+	for i := 0; i < 10; i++ {
+		root := t.addData(i, 0)
+		root.SubTask = make([]model.Task, 0, 10)
+		for j := 0; j < 10; j++ {
+			root.SubTask = append(root.SubTask, t.addData(i*10+j, root.ID))
+		}
+		roots = append(roots, root)
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=0", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
+	body := struct {
+		StartId int               `json:"start_id"`
+		Limit   int               `json:"limit"`
+		More    bool              `json:"more"`
+		Data    []json.RawMessage `json:"data"`
+	}{}
+	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+	t.EqualValues(0, body.StartId)
+	t.EqualValues(service.DefaultPageLimit, body.Limit)
+	t.EqualValues(false, body.More)
+	t.Len(body.Data, service.DefaultPageLimit)
+	for i, v := range body.Data {
+		roots[i].SubTask = nil
+		taskStr, err := json.Marshal(roots[i])
+		t.NoError(err)
+		t.EqualValuesf(taskStr, v, "%s - %s", taskStr, v)
 	}
 }
 
@@ -241,20 +308,24 @@ func (t *_testTaskSuite) Test_Delete_SuccessWhenHasData() {
 func (t *_testTaskSuite) addRootData(num int) []model.Task {
 	res := make([]model.Task, 0, num)
 	for i := 0; i < num; i++ {
-		task := model.Task{
-			ParentId: 0,
-			Point:    100,
-			IsCheck:  false,
-			Star:     2,
-			Category: fmt.Sprintf("test-category-%v", i),
-			Title:    fmt.Sprintf("test-title-%v", i),
-			Detail:   fmt.Sprintf("test-detail-%v", i),
-			StartAt:  time.Now(),
-		}
-		t.NoError(t.db.Create(&task).Error)
-		res = append(res, task)
+		res = append(res, t.addData(i, 0))
 	}
 	return res
+}
+
+func (t *_testTaskSuite) addData(no int, parent uint) model.Task {
+	task := model.Task{
+		ParentId: parent,
+		Point:    100,
+		IsCheck:  false,
+		Star:     2,
+		Category: fmt.Sprintf("test-category-%v", no),
+		Title:    fmt.Sprintf("test-title-%v", no),
+		Detail:   fmt.Sprintf("test-detail-%v", no),
+		StartAt:  time.Now(),
+	}
+	t.NoError(t.db.Create(&task).Error)
+	return task
 }
 
 func TestTaskSuite(t *testing.T) {

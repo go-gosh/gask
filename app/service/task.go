@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,17 +16,56 @@ import (
 
 type TaskPageRequest struct {
 	mapper.CRUDPageResult[TaskViewResp]
-	ParentId *uint `json:"parent_id" form:"parent_id"`
+	ParentId *uint    `json:"parent_id" form:"parent_id"`
+	OrderBy  []string `form:"order_by"`
 }
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		db = db.Order("id DESC")
+		pk := false
+		if len(r.OrderBy) > 0 {
+			for _, s := range r.OrderBy {
+				if s == "" {
+					continue
+				}
+				desc := "ASC"
+				if s[0] == '-' {
+					desc = "DESC"
+				}
+				k := strings.ToLower(strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-"))
+				if !r.isOrderKey(k) {
+					continue
+				}
+				if k == "id" {
+					pk = true
+				}
+				db = db.Order(fmt.Sprintf("%s %s", k, desc))
+			}
+		}
+		if !pk {
+			db = db.Order("id DESC")
+		}
 		if r.ParentId == nil {
 			return db
 		}
 		return db.Where("parent_id=?", *r.ParentId)
 	}
+}
+
+var taskOrderKey = map[string]struct{}{
+	"id":        {},
+	"parent_id": {},
+	"point":     {},
+	"is_check":  {},
+	"star":      {},
+	"category":  {},
+	"start_at":  {},
+	"dead_line": {},
+}
+
+func (r TaskPageRequest) isOrderKey(k string) bool {
+	_, ok := taskOrderKey[k]
+	return ok
 }
 
 type TaskUpdateRequest struct {

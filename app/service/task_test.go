@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"testing"
 	"time"
 
@@ -120,6 +121,9 @@ func (t *_testTaskSuite) Test_Paginate_SubTaskWhenHasData() {
 		for j := 0; j < 9; j++ {
 			root.SubTask = append(root.SubTask, t.addData(i*10+j, root.ID))
 		}
+		sort.Slice(root.SubTask, func(i, j int) bool {
+			return root.SubTask[i].ID > root.SubTask[j].ID
+		})
 		roots = append(roots, root)
 	}
 
@@ -151,8 +155,14 @@ func (t *_testTaskSuite) Test_Paginate_RootTaskWhenHasData() {
 		for j := 0; j < 10; j++ {
 			root.SubTask = append(root.SubTask, t.addData(i*10+j, root.ID))
 		}
+		sort.Slice(root.SubTask, func(i, j int) bool {
+			return root.SubTask[i].ID > root.SubTask[j].ID
+		})
 		roots = append(roots, root)
 	}
+	sort.Slice(roots, func(i, j int) bool {
+		return roots[i].ID > roots[j].ID
+	})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=0", nil)
@@ -225,7 +235,7 @@ func (t *_testTaskSuite) Test_Retrieve_ShowTaskWhenHasData() {
 	req, _ := http.NewRequest("GET", "/api/v1/task/5", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	view, err := t.svc.NewTaskViewResp(&data[4])
+	view, err := t.svc.NewTaskViewResp(&data[5])
 	taskStr, err := json.Marshal(view)
 	t.NoError(err)
 	t.EqualValues(taskStr, w.Body.String())
@@ -245,7 +255,7 @@ func (t *_testTaskSuite) Test_Update_ModifiedWhenChangeData() {
 	t.EqualValues("changed-title", task.Title)
 	ac, err := json.Marshal(task)
 	t.NoError(err)
-	old := data[4]
+	old := data[service.DefaultPageLimit-5]
 	old.Title = task.Title
 	old.UpdatedAt = task.UpdatedAt
 	ex, err := json.Marshal(old)
@@ -297,6 +307,9 @@ func (t *_testTaskSuite) addRootData(num int) []model.Task {
 	for i := 0; i < num; i++ {
 		res = append(res, t.addData(i, 0))
 	}
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].ID > res[j].ID
+	})
 	return res
 }
 

@@ -19,6 +19,7 @@ type TaskPageRequest struct {
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
+		db = db.Order("id DESC")
 		if r.ParentId == nil {
 			return db
 		}

@@ -228,6 +228,87 @@ func (t *_testTaskSuite) Test_Paginate_NextPageRootTaskWhenMoreData() {
 	t.EqualValues(taskStr, body.Data[0])
 }
 
+func (t *_testTaskSuite) Test_Paginate_NextPageRootTaskWhenMoreDataAndOrderByStarDesc() {
+	data := t.addRootData(service.DefaultPageLimit + 2)
+	sort.Slice(data, func(i, j int) bool {
+		if data[i].Star == data[j].Star {
+			return data[i].ID > data[j].ID
+		}
+		return data[i].Star > data[j].Star
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task?page_size=11&page=2&order_by=-star", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
+	body := mapper.CRUDPageResult[json.RawMessage]{}
+	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+	t.EqualValues(2, body.Page)
+	t.EqualValues(11, body.PageSize)
+	t.EqualValues(12, body.Total)
+	t.EqualValues(2, body.TotalPage)
+	t.Len(body.Data, 1)
+	view, err := t.svc.NewTaskViewResp(&data[11])
+	t.NoError(err)
+	taskStr, err := json.Marshal(view)
+	t.NoError(err)
+	t.EqualValues(taskStr, body.Data[0])
+}
+
+func (t *_testTaskSuite) Test_Paginate_NextPageRootTaskWhenMoreDataAndOrderByStarAscPointDesc() {
+	data := t.addRootData(service.DefaultPageLimit + 2)
+	sort.Slice(data, func(i, j int) bool {
+		if data[i].Star == data[j].Star {
+			if data[i].Point == data[j].Point {
+				return data[i].ID > data[j].ID
+			}
+			return data[i].Point > data[j].Point
+		}
+		return data[i].Star < data[j].Star
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task?page_size=11&page=2&order_by=star&order_by=-point", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
+	body := mapper.CRUDPageResult[json.RawMessage]{}
+	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+	t.EqualValues(2, body.Page)
+	t.EqualValues(11, body.PageSize)
+	t.EqualValues(12, body.Total)
+	t.EqualValues(2, body.TotalPage)
+	t.Len(body.Data, 1)
+	view, err := t.svc.NewTaskViewResp(&data[11])
+	t.NoError(err)
+	taskStr, err := json.Marshal(view)
+	t.NoError(err)
+	t.EqualValues(taskStr, body.Data[0])
+}
+
+func (t *_testTaskSuite) Test_Paginate_NextPageRootTaskWhenMoreDataAndOrderByIdAsc() {
+	data := t.addRootData(service.DefaultPageLimit + 2)
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].ID < data[j].ID
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task?page_size=11&page=2&order_by=id", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
+	body := mapper.CRUDPageResult[json.RawMessage]{}
+	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+	t.EqualValues(2, body.Page)
+	t.EqualValues(11, body.PageSize)
+	t.EqualValues(12, body.Total)
+	t.EqualValues(2, body.TotalPage)
+	t.Len(body.Data, 1)
+	view, err := t.svc.NewTaskViewResp(&data[11])
+	t.NoError(err)
+	taskStr, err := json.Marshal(view)
+	t.NoError(err)
+	t.EqualValues(taskStr, body.Data[0])
+}
+
 func (t *_testTaskSuite) Test_Retrieve_ShowTaskWhenHasData() {
 	data := t.addRootData(service.DefaultPageLimit)
 
@@ -316,9 +397,9 @@ func (t *_testTaskSuite) addRootData(num int) []model.Task {
 func (t *_testTaskSuite) addData(no int, parent uint) model.Task {
 	task := model.Task{
 		ParentId: parent,
-		Point:    100,
+		Point:    uint8(100 - no),
 		IsCheck:  false,
-		Star:     2,
+		Star:     uint8(no % 4),
 		Category: fmt.Sprintf("test-category-%v", no),
 		Title:    fmt.Sprintf("test-title-%v", no),
 		Detail:   fmt.Sprintf("test-detail-%v", no),

@@ -6,12 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
-type TaskRepo struct {
-	mapper.Mapper[model.Task]
-}
+type TaskRepo mapper.CRUDMapper[model.Task]
 
-func NewTaskRepo(db *gorm.DB) *TaskRepo {
-	return &TaskRepo{
-		Mapper: mapper.NewBaseMapper[model.Task](db),
-	}
+func NewTaskRepo(db *gorm.DB) TaskRepo {
+	return mapper.NewCRUDMapper[model.Task](db)
 }

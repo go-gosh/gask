@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
+	"github.com/go-gosh/gestful/component/mapper"
 	"github.com/go-gosh/gestful/component/service"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/sqlite"
@@ -21,8 +22,8 @@ import (
 type _testTaskSuite struct {
 	suite.Suite
 	db     *gorm.DB
-	repo   *repo.TaskRepo
-	svc    *Task
+	repo   repo.TaskRepo
+	svc    *task
 	engine *gin.Engine
 }
 
@@ -33,9 +34,9 @@ func (t *_testTaskSuite) SetupTest() {
 	t.db = t.db.Debug()
 	t.Require().NoError(t.db.AutoMigrate(&model.Task{}))
 	t.repo = repo.NewTaskRepo(t.db)
-	t.svc = NewTask(t.repo)
+	t.svc = NewTask(t.repo).(*task)
 	t.engine = gin.Default()
-	t.svc.RegisterGroupRoute(t.engine.Group("/api/v1"), "task")
+	service.RegisterGroupRoute[TaskViewResp, mapper.CRUDPageResult[TaskViewResp]](t.engine.Group("/api/v1"), "task", t.svc)
 }
 
 func (t *_testTaskSuite) TearDownTest() {
@@ -76,19 +77,15 @@ func (t *_testTaskSuite) Test_Create() {
 
 func (t *_testTaskSuite) Test_Paginate_NoRootTask() {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/task", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=0", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(0, body.StartId)
-	t.EqualValues(service.DefaultPageLimit, body.Limit)
-	t.EqualValues(false, body.More)
+	t.EqualValues(1, body.Page)
+	t.EqualValues(service.DefaultPageLimit, body.PageSize)
+	t.EqualValues(0, body.Total)
+	t.EqualValues(0, body.TotalPage)
 	t.Len(body.Data, 0)
 }
 
@@ -99,19 +96,17 @@ func (t *_testTaskSuite) Test_Paginate_DefaultTaskWhenJustFillData() {
 	req, _ := http.NewRequest("GET", "/api/v1/task", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(0, body.StartId)
-	t.EqualValues(service.DefaultPageLimit, body.Limit)
-	t.EqualValues(false, body.More)
+	t.EqualValues(1, body.Page)
+	t.EqualValues(service.DefaultPageLimit, body.PageSize)
+	t.EqualValues(10, body.Total)
+	t.EqualValues(1, body.TotalPage)
 	t.Len(body.Data, service.DefaultPageLimit)
+	view, err := Map(data, t.svc.NewTaskViewResp)
+	t.Require().NoError(err)
 	for i, v := range body.Data {
-		taskStr, err := json.Marshal(data[i])
+		taskStr, err := json.Marshal(view[i])
 		t.NoError(err)
 		t.EqualValues(taskStr, v)
 	}
@@ -132,19 +127,17 @@ func (t *_testTaskSuite) Test_Paginate_SubTaskWhenHasData() {
 	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=31", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(0, body.StartId)
-	t.EqualValues(service.DefaultPageLimit, body.Limit)
-	t.EqualValues(false, body.More)
+	t.EqualValues(1, body.Page)
+	t.EqualValues(service.DefaultPageLimit, body.PageSize)
+	t.EqualValues(9, body.Total)
+	t.EqualValues(1, body.TotalPage)
 	t.Len(body.Data, 9)
 	for i, v := range body.Data {
-		taskStr, err := json.Marshal(roots[3].SubTask[i])
+		view, err := t.svc.NewTaskViewResp(&roots[3].SubTask[i])
+		t.NoError(err)
+		taskStr, err := json.Marshal(view)
 		t.NoError(err)
 		t.EqualValuesf(taskStr, v, "%s - %s", taskStr, v)
 	}
@@ -165,20 +158,17 @@ func (t *_testTaskSuite) Test_Paginate_RootTaskWhenHasData() {
 	req, _ := http.NewRequest("GET", "/api/v1/task?parent_id=0", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(0, body.StartId)
-	t.EqualValues(service.DefaultPageLimit, body.Limit)
-	t.EqualValues(false, body.More)
+	t.EqualValues(1, body.Page)
+	t.EqualValues(service.DefaultPageLimit, body.PageSize)
+	t.EqualValues(10, body.Total)
+	t.EqualValues(1, body.TotalPage)
 	t.Len(body.Data, service.DefaultPageLimit)
 	for i, v := range body.Data {
-		roots[i].SubTask = nil
-		taskStr, err := json.Marshal(roots[i])
+		view, err := t.svc.NewTaskViewResp(&roots[i])
+		t.NoError(err)
+		taskStr, err := json.Marshal(view)
 		t.NoError(err)
 		t.EqualValuesf(taskStr, v, "%s - %s", taskStr, v)
 	}
@@ -188,22 +178,20 @@ func (t *_testTaskSuite) Test_Paginate_11RootTaskWhenMoreData() {
 	data := t.addRootData(service.DefaultPageLimit + 2)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/task?limit=11", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/task?page_size=11", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(0, body.StartId)
-	t.EqualValues(11, body.Limit)
-	t.EqualValues(true, body.More)
+	t.EqualValues(1, body.Page)
+	t.EqualValues(11, body.PageSize)
+	t.EqualValues(12, body.Total)
+	t.EqualValues(2, body.TotalPage)
 	t.Len(body.Data, 11)
+	view, err := Map(data, t.svc.NewTaskViewResp)
+	t.Require().NoError(err)
 	for i, v := range body.Data {
-		taskStr, err := json.Marshal(data[i])
+		taskStr, err := json.Marshal(view[i])
 		t.NoError(err)
 		t.EqualValues(taskStr, v)
 	}
@@ -213,21 +201,19 @@ func (t *_testTaskSuite) Test_Paginate_NextPageRootTaskWhenMoreData() {
 	data := t.addRootData(service.DefaultPageLimit + 2)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/task?limit=11&start_id=11", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/task?page_size=11&page=2", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	body := struct {
-		StartId int               `json:"start_id"`
-		Limit   int               `json:"limit"`
-		More    bool              `json:"more"`
-		Data    []json.RawMessage `json:"data"`
-	}{}
+	body := mapper.CRUDPageResult[json.RawMessage]{}
 	t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
-	t.EqualValues(11, body.StartId)
-	t.EqualValues(11, body.Limit)
-	t.EqualValues(false, body.More)
+	t.EqualValues(2, body.Page)
+	t.EqualValues(11, body.PageSize)
+	t.EqualValues(12, body.Total)
+	t.EqualValues(2, body.TotalPage)
 	t.Len(body.Data, 1)
-	taskStr, err := json.Marshal(data[11])
+	view, err := t.svc.NewTaskViewResp(&data[11])
+	t.NoError(err)
+	taskStr, err := json.Marshal(view)
 	t.NoError(err)
 	t.EqualValues(taskStr, body.Data[0])
 }
@@ -239,7 +225,8 @@ func (t *_testTaskSuite) Test_Retrieve_ShowTaskWhenHasData() {
 	req, _ := http.NewRequest("GET", "/api/v1/task/5", nil)
 	t.engine.ServeHTTP(w, req)
 	t.Require().Equal(http.StatusOK, w.Code, w.Body.String())
-	taskStr, err := json.Marshal(data[4])
+	view, err := t.svc.NewTaskViewResp(&data[4])
+	taskStr, err := json.Marshal(view)
 	t.NoError(err)
 	t.EqualValues(taskStr, w.Body.String())
 }

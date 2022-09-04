@@ -22,34 +22,39 @@ type TaskPageRequest struct {
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		pk := false
-		if len(r.OrderBy) > 0 {
-			for _, s := range r.OrderBy {
-				if s == "" {
-					continue
-				}
-				desc := "ASC"
-				if s[0] == '-' {
-					desc = "DESC"
-				}
-				k := strings.ToLower(strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-"))
-				if !r.isOrderKey(k) {
-					continue
-				}
-				if k == "id" {
-					pk = true
-				}
-				db = db.Order(fmt.Sprintf("%s %s", k, desc))
-			}
-		}
-		if !pk {
-			db = db.Order("id DESC")
-		}
+		db = r.orderFunc(db)
 		if r.ParentId == nil {
 			return db
 		}
 		return db.Where("parent_id=?", *r.ParentId)
 	}
+}
+
+func (r TaskPageRequest) orderFunc(db *gorm.DB) *gorm.DB {
+	pk := false
+	if len(r.OrderBy) > 0 {
+		for _, s := range r.OrderBy {
+			if s == "" {
+				continue
+			}
+			desc := "ASC"
+			if s[0] == '-' {
+				desc = "DESC"
+			}
+			k := strings.ToLower(strings.TrimPrefix(strings.TrimPrefix(s, "+"), "-"))
+			if !r.isOrderKey(k) {
+				continue
+			}
+			if k == "id" {
+				pk = true
+			}
+			db = db.Order(fmt.Sprintf("%s %s", k, desc))
+		}
+	}
+	if !pk {
+		db = db.Order("id DESC")
+	}
+	return db
 }
 
 var taskOrderKey = map[string]struct{}{

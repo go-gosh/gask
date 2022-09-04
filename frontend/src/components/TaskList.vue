@@ -1,5 +1,13 @@
 <template>
   <div>
+    <div style="text-align: right">
+      <el-button @click="showCreate = true" type="primary">Create</el-button>
+    </div>
+
+    <el-dialog v-model="showCreate" title="Create New Task">
+      <TaskCreate/>
+    </el-dialog>
+
     <el-table :data="data.data" stripe border table-layout="auto">
       <el-table-column prop="id" label="ID"/>
       <el-table-column prop="point" label="Point"/>
@@ -27,17 +35,25 @@
       <el-table-column prop="created_at" label="Create Time" :formatter="dateFormatter"/>
       <el-table-column prop="updated_at" label="Update Time" :formatter="dateFormatter"/>
     </el-table>
+    <el-pagination v-model:current-page="data.page" v-model:page-size="data.page_size"
+                   :page-sizes="[10, 30, 50, 100]" :total="data.total" background
+                   layout="total, sizes, prev, pager, next, jumper"
+                   small @size-change="request(0)"
+                   @current-change="request(0)"
+    />
   </div>
 </template>
 
 <script>
 import axios from "axios";
 import {dayjs} from "element-plus";
+import TaskCreate from "@/components/TaskCreate";
 
 export default {
   name: "TaskList",
+  components: {TaskCreate},
   created() {
-    this.request(0, 1)
+    this.request(0)
   },
   methods: {
     dateFormatter(row, col) {
@@ -55,8 +71,8 @@ export default {
         console.log(error);
       })
     },
-    request(parentId, page) {
-      axios.get("http://localhost:8080/api/v1/task?parent_id=" + parentId + "&page=" + page)
+    request(parentId) {
+      axios.get("http://localhost:8080/api/v1/task?parent_id=" + parentId + "&page=" + this.data.page + "&page_size=" + this.data.page_size)
           .then(res => {
             this.data = res.data
           }).catch(function (error) { // 请求失败处理
@@ -66,12 +82,20 @@ export default {
   },
   data() {
     return {
-      data: {},
+      showCreate: false,
+      data: {
+        page: 1,
+        page_size: 10,
+        total: 0,
+        data: [],
+      },
     }
   }
 }
 </script>
 
 <style scoped>
-
+.el-pagination {
+  justify-content: center;
+}
 </style>

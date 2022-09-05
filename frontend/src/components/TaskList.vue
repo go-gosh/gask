@@ -45,9 +45,9 @@
 </template>
 
 <script>
-import axios from "axios";
 import {dayjs} from "element-plus";
 import TaskCreate from "@/components/TaskCreate";
+import {taskPaginate} from "@/request/api/task";
 
 export default {
   name: "TaskList",
@@ -63,20 +63,13 @@ export default {
       if (unix === 0) return ""
       return dayjs.unix(unix).format('YYYY-MM-DD HH:mm:ss')
     },
-    load(row, treeNode, resolve) {
-      axios.get("http://localhost:8080/api/v1/task?parent_id=" + row.id + "&page=" + 1)
-          .then(res => {
-            resolve(res.data.data)
-          }).catch(function (error) { // 请求失败处理
-        console.log(error);
-      })
-    },
     request(parentId) {
-      axios.get("http://localhost:8080/api/v1/task?parent_id=" + parentId + "&page=" + this.data.page + "&page_size=" + this.data.page_size)
-          .then(res => {
-            this.data = res.data
-          }).catch(function (error) { // 请求失败处理
-        console.log(error);
+      taskPaginate({
+        page: this.data.page,
+        page_size: this.data.page_size,
+        parent_id: parentId,
+      }).then(res => {
+        this.data = res.data
       })
     }
   },

@@ -67,8 +67,8 @@
 </template>
 
 <script>
-import axios from "axios";
-import {dayjs} from "element-plus";
+import {dayjs, ElMessage} from "element-plus";
+import {taskCreate, taskDetail} from "@/request/api/task";
 
 export default {
   name: "TaskCreate",
@@ -103,11 +103,8 @@ export default {
   methods: {
     remoteMethod(query) {
       if (query) {
-        axios.get("http://localhost:8080/api/v1/task/" + query)
-            .then(res => {
-              this.rootTasks = [res.data]
-            }).catch(function (error) { // 请求失败处理
-          console.log(error);
+        taskDetail(query).then(res => {
+          this.rootTasks = [res.data]
         })
         return
       }
@@ -116,11 +113,8 @@ export default {
     onSubmit() {
       this.$refs.Form.validate((valid) => {
         if (valid) {
-          axios.post("http://localhost:8080/api/v1/task", this.form)
-              .then(res => {
-                console.log(res)
-              }).catch(reason => {
-            console.log(reason)
+          taskCreate(this.form).then(res => {
+            ElMessage.success(res.data)
           })
         } else {
           console.log('error submit!')

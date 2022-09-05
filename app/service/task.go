@@ -141,6 +141,8 @@ type TaskViewResp struct {
 	DeadLine  int64  `json:"dead_line,string"`
 	CreatedAt int64  `json:"created_at,string"`
 	UpdatedAt int64  `json:"updated_at,string"`
+
+	Parent *TaskViewResp `json:"parent"`
 }
 
 type TaskCreateRequest struct {
@@ -236,8 +238,23 @@ func (t task) Retrieve(ctx *gin.Context) (*TaskViewResp, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return t.NewTaskViewResp(et)
+	view, err := t.NewTaskViewResp(et)
+	if err != nil {
+		return nil, err
+	}
+	if view.ParentId == 0 {
+		return view, err
+	}
+	parent, err := t.repo.OneById(ctx, view.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	parentView, err := t.NewTaskViewResp(parent)
+	if err != nil {
+		return nil, err
+	}
+	view.Parent = parentView
+	return view, err
 }
 
 func Map[T, U any](data []T, fn func(*T) (*U, error)) ([]U, error) {

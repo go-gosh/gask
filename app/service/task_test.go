@@ -354,6 +354,24 @@ func (t *_testTaskSuite) Test_Update_NotFoundWhenNoData() {
 	t.Require().Equal(http.StatusNotFound, w.Code, w.Body.String())
 }
 
+func (t *_testTaskSuite) Test_Retrieve_ShowParentWhenSubTask() {
+	root := t.addData(1, 0)
+	data := t.addData(10, root.ID)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/task/2", nil)
+	t.engine.ServeHTTP(w, req)
+	t.Require().Equal(http.StatusOK, w.Code)
+	v, err := t.svc.NewTaskViewResp(&data)
+	t.NoError(err)
+	rv, err := t.svc.NewTaskViewResp(&root)
+	t.NoError(err)
+	v.Parent = rv
+	taskStr, err := json.Marshal(v)
+	t.NoError(err)
+	t.EqualValues(taskStr, w.Body.String())
+}
+
 func (t *_testTaskSuite) Test_Retrieve_ShowTaskWhenNoData() {
 	t.addRootData(service.DefaultPageLimit)
 

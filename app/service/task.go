@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
+	"github.com/go-gosh/gask/app/util"
 	"github.com/go-gosh/gestful/component/mapper"
 	"github.com/go-gosh/gestful/component/service"
 	"gorm.io/gorm"
@@ -82,14 +83,15 @@ func (r TaskPageRequest) orderFunc(db *gorm.DB) *gorm.DB {
 }
 
 var taskOrderKey = map[string]struct{}{
-	"id":        {},
-	"parent_id": {},
-	"point":     {},
-	"is_check":  {},
-	"star":      {},
-	"category":  {},
-	"start_at":  {},
-	"deadline":  {},
+	"id":          {},
+	"parent_id":   {},
+	"point":       {},
+	"star":        {},
+	"category":    {},
+	"start_at":    {},
+	"cancel_at":   {},
+	"complete_at": {},
+	"deadline":    {},
 }
 
 func (r TaskPageRequest) isOrderKey(k string) bool {
@@ -98,15 +100,16 @@ func (r TaskPageRequest) isOrderKey(k string) bool {
 }
 
 type TaskUpdateRequest struct {
-	ParentId *uint   `json:"parent_id"`
-	Point    *uint8  `json:"point"`
-	IsCheck  *bool   `json:"is_check"`
-	Star     *uint8  `json:"star"`
-	Category *string `json:"category"`
-	Title    *string `json:"title"`
-	Detail   *string `json:"detail"`
-	StartAt  *int64  `json:"start_at"`
-	Deadline *int64  `json:"deadline"`
+	ParentId   *uint   `json:"parent_id"`
+	Point      *uint8  `json:"point"`
+	Star       *uint8  `json:"star"`
+	Category   *string `json:"category"`
+	Title      *string `json:"title"`
+	Detail     *string `json:"detail"`
+	StartAt    *int64  `json:"start_at"`
+	CompleteAt *int64  `json:"complete_at"`
+	CancelAt   *int64  `json:"cancel_at"`
+	Deadline   *int64  `json:"deadline"`
 }
 
 func (t TaskUpdateRequest) MakeUpdate() (map[string]interface{}, error) {
@@ -117,11 +120,22 @@ func (t TaskUpdateRequest) MakeUpdate() (map[string]interface{}, error) {
 	if t.Point != nil {
 		updated["point"] = *t.Point
 	}
-	if t.IsCheck != nil {
-		updated["is_check"] = *t.IsCheck
+	if t.CompleteAt != nil {
+		if *t.CompleteAt == 0 {
+			updated["complete_at"] = nil
+		} else {
+			updated["complete_at"] = util.Point(time.Unix(*t.CompleteAt, 0))
+		}
+	}
+	if t.CancelAt != nil {
+		if *t.CancelAt == 0 {
+			updated["cancel_at"] = nil
+		} else {
+			updated["cancel_at"] = util.Point(time.Unix(*t.CancelAt, 0))
+		}
 	}
 	if t.Star != nil {
-		updated["start"] = *t.Star
+		updated["star"] = *t.Star
 	}
 	if t.Category != nil {
 		updated["category"] = *t.Category
@@ -153,39 +167,40 @@ type TaskIdUri struct {
 }
 
 type TaskViewResp struct {
-	ID        uint   `json:"id"`
-	ParentId  uint   `json:"parent_id"`
-	Point     uint8  `json:"point"`
-	IsCheck   bool   `json:"is_check"`
-	Star      uint8  `json:"star"`
-	Category  string `json:"category"`
-	Title     string `json:"title"`
-	Detail    string `json:"detail"`
-	StartAt   int64  `json:"start_at,string"`
-	Deadline  int64  `json:"deadline,string"`
-	CreatedAt int64  `json:"created_at,string"`
-	UpdatedAt int64  `json:"updated_at,string"`
+	ID         uint   `json:"id"`
+	ParentId   uint   `json:"parent_id"`
+	Point      uint8  `json:"point"`
+	Star       uint8  `json:"star"`
+	Category   string `json:"category"`
+	Title      string `json:"title"`
+	Detail     string `json:"detail"`
+	StartAt    int64  `json:"start_at,string"`
+	CompleteAt int64  `json:"complete_at,string"`
+	CancelAt   int64  `json:"cancel_at,string"`
+	Deadline   int64  `json:"deadline,string"`
+	CreatedAt  int64  `json:"created_at,string"`
+	UpdatedAt  int64  `json:"updated_at,string"`
 
 	Parent *TaskViewResp `json:"parent"`
 }
 
 type TaskCreateRequest struct {
-	ParentId uint   `json:"parent_id"`
-	Point    uint8  `json:"point"`
-	IsCheck  bool   `json:"is_check"`
-	Star     uint8  `json:"star"`
-	Category string `json:"category"`
-	Title    string `json:"title"`
-	Detail   string `json:"detail"`
-	StartAt  int64  `json:"start_at,string"`
-	Deadline int64  `json:"deadline,string"`
+	ParentId   uint   `json:"parent_id"`
+	Point      uint8  `json:"point"`
+	IsCheck    bool   `json:"is_check"`
+	Star       uint8  `json:"star"`
+	Category   string `json:"category"`
+	Title      string `json:"title"`
+	Detail     string `json:"detail"`
+	StartAt    int64  `json:"start_at,string"`
+	Deadline   int64  `json:"deadline,string"`
+	CompleteAt int64  `json:"complete_at,string"`
 }
 
 func (t TaskCreateRequest) ToEntity() (*model.Task, error) {
 	req := &model.Task{
 		ParentId: t.ParentId,
 		Point:    t.Point,
-		IsCheck:  t.IsCheck,
 		Star:     t.Star,
 		Category: t.Category,
 		Title:    t.Title,
@@ -197,8 +212,10 @@ func (t TaskCreateRequest) ToEntity() (*model.Task, error) {
 		req.StartAt = time.Unix(t.StartAt, 0)
 	}
 	if t.Deadline != 0 {
-		deadline := time.Unix(t.Deadline, 0)
-		req.Deadline = &deadline
+		req.Deadline = util.Point(time.Unix(t.Deadline, 0))
+	}
+	if t.CompleteAt != 0 {
+		req.CompleteAt = util.Point(time.Unix(t.CompleteAt, 0))
 	}
 
 	return req, nil
@@ -298,23 +315,21 @@ func (t task) NewTaskViewResp(et *model.Task) (*TaskViewResp, error) {
 		return nil, nil
 	}
 
-	var deadLine int64
-	if et.Deadline != nil {
-		deadLine = et.Deadline.Unix()
-	}
+	unix := time.Unix(0, 0)
 	return &TaskViewResp{
-		ID:        et.ID,
-		ParentId:  et.ParentId,
-		Point:     et.Point,
-		IsCheck:   et.IsCheck,
-		Star:      et.Star,
-		Category:  et.Category,
-		Title:     et.Title,
-		Detail:    et.Detail,
-		StartAt:   et.StartAt.Unix(),
-		Deadline:  deadLine,
-		CreatedAt: et.CreatedAt.Unix(),
-		UpdatedAt: et.UpdatedAt.Unix(),
+		ID:         et.ID,
+		ParentId:   et.ParentId,
+		Point:      et.Point,
+		Star:       et.Star,
+		Category:   et.Category,
+		Title:      et.Title,
+		Detail:     et.Detail,
+		StartAt:    et.StartAt.Unix(),
+		CompleteAt: util.NilToDefault(et.CompleteAt, unix).Unix(),
+		CancelAt:   util.NilToDefault(et.CancelAt, unix).Unix(),
+		Deadline:   util.NilToDefault(et.Deadline, unix).Unix(),
+		CreatedAt:  et.CreatedAt.Unix(),
+		UpdatedAt:  et.UpdatedAt.Unix(),
 	}, nil
 }
 

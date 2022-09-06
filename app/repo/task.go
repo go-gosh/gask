@@ -16,6 +16,6 @@ func NewTaskRepo(db *gorm.DB) TaskRepo {
 
 func WrapperDateRangeActive(start, end time.Time) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("start_at<? and (dead_line is NULL or dead_line>=?)", end, start)
+		return db.Where("start_at<? and ((deadline is NULL and complete_at is NULL) or deadline>=?)", end, start)
 	}
 }

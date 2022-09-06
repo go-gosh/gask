@@ -68,7 +68,6 @@ func (t *_testTaskSuite) Test_Create() {
 	t.NoError(t.db.Model(&model.Task{}).Find(&task, 1).Error)
 	t.EqualValues(input["parent_id"], task.ParentId)
 	t.EqualValues(input["point"], task.Point)
-	t.EqualValues(false, task.IsCheck)
 	t.EqualValues(input["star"], task.Star)
 	t.EqualValues(input["category"], task.Category)
 	t.EqualValues(input["title"], task.Title)
@@ -510,7 +509,6 @@ func (t *_testTaskSuite) addData(no int, parent uint) model.Task {
 	task := model.Task{
 		ParentId: parent,
 		Point:    uint8(100 - no),
-		IsCheck:  false,
 		Star:     uint8(no % 4),
 		Category: fmt.Sprintf("test-category-%v", no),
 		Title:    fmt.Sprintf("test-title-%v", no),

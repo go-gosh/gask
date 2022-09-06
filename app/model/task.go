@@ -12,7 +12,7 @@ type Task struct {
 	Title    string     `json:"title" gorm:"not null"`
 	Detail   string     `json:"detail" gorm:"not null"`
 	StartAt  time.Time  `json:"start_at" gorm:"not null"`
-	DeadLine *time.Time `json:"dead_line"`
+	Deadline *time.Time `json:"deadline"`
 
 	SubTask []Task `json:"sub_task" gorm:"foreignKey:ParentId"`
 }

@@ -82,7 +82,7 @@ var taskOrderKey = map[string]struct{}{
 	"star":      {},
 	"category":  {},
 	"start_at":  {},
-	"dead_line": {},
+	"deadline":  {},
 }
 
 func (r TaskPageRequest) isOrderKey(k string) bool {
@@ -99,7 +99,7 @@ type TaskUpdateRequest struct {
 	Title    *string `json:"title"`
 	Detail   *string `json:"detail"`
 	StartAt  *int64  `json:"start_at"`
-	DeadLine *int64  `json:"dead_line"`
+	Deadline *int64  `json:"deadline"`
 }
 
 func (t TaskUpdateRequest) MakeUpdate() (map[string]interface{}, error) {
@@ -128,11 +128,11 @@ func (t TaskUpdateRequest) MakeUpdate() (map[string]interface{}, error) {
 	if t.StartAt != nil {
 		updated["start"] = time.Unix(*t.StartAt, 0)
 	}
-	if t.DeadLine != nil {
-		if *t.DeadLine == 0 {
+	if t.Deadline != nil {
+		if *t.Deadline == 0 {
 			updated["deadline"] = nil
 		} else {
-			updated["deadline"] = time.Unix(*t.DeadLine, 0)
+			updated["deadline"] = time.Unix(*t.Deadline, 0)
 		}
 	}
 	if len(updated) == 0 {
@@ -155,7 +155,7 @@ type TaskViewResp struct {
 	Title     string `json:"title"`
 	Detail    string `json:"detail"`
 	StartAt   int64  `json:"start_at,string"`
-	DeadLine  int64  `json:"dead_line,string"`
+	Deadline  int64  `json:"deadline,string"`
 	CreatedAt int64  `json:"created_at,string"`
 	UpdatedAt int64  `json:"updated_at,string"`
 
@@ -171,7 +171,7 @@ type TaskCreateRequest struct {
 	Title    string `json:"title"`
 	Detail   string `json:"detail"`
 	StartAt  int64  `json:"start_at,string"`
-	DeadLine int64  `json:"dead_line,string"`
+	Deadline int64  `json:"deadline,string"`
 }
 
 func (t TaskCreateRequest) ToEntity() (*model.Task, error) {
@@ -189,9 +189,9 @@ func (t TaskCreateRequest) ToEntity() (*model.Task, error) {
 	} else {
 		req.StartAt = time.Unix(t.StartAt, 0)
 	}
-	if t.DeadLine != 0 {
-		deadline := time.Unix(t.DeadLine, 0)
-		req.DeadLine = &deadline
+	if t.Deadline != 0 {
+		deadline := time.Unix(t.Deadline, 0)
+		req.Deadline = &deadline
 	}
 
 	return req, nil
@@ -292,8 +292,8 @@ func (t task) NewTaskViewResp(et *model.Task) (*TaskViewResp, error) {
 	}
 
 	var deadLine int64
-	if et.DeadLine != nil {
-		deadLine = et.DeadLine.Unix()
+	if et.Deadline != nil {
+		deadLine = et.Deadline.Unix()
 	}
 	return &TaskViewResp{
 		ID:        et.ID,
@@ -305,7 +305,7 @@ func (t task) NewTaskViewResp(et *model.Task) (*TaskViewResp, error) {
 		Title:     et.Title,
 		Detail:    et.Detail,
 		StartAt:   et.StartAt.Unix(),
-		DeadLine:  deadLine,
+		Deadline:  deadLine,
 		CreatedAt: et.CreatedAt.Unix(),
 		UpdatedAt: et.UpdatedAt.Unix(),
 	}, nil

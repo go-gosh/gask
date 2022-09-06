@@ -73,7 +73,7 @@ func (t *_testTaskSuite) Test_Create() {
 	t.EqualValues(input["category"], task.Category)
 	t.EqualValues(input["title"], task.Title)
 	t.EqualValues(input["detail"], task.Detail)
-	t.Nil(task.DeadLine)
+	t.Nil(task.Deadline)
 }
 
 func (t *_testTaskSuite) Test_Paginate_NoRootTask() {

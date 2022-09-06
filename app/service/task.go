@@ -19,6 +19,7 @@ type TaskPageRequest struct {
 	ParentId *uint    `json:"parent_id" form:"parent_id"`
 	OrderBy  []string `form:"order_by"`
 	Datetime string   `json:"datetime" form:"datetime"`
+	Process  string   `json:"process" form:"process"`
 }
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
@@ -42,6 +43,12 @@ func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 				break
 			}
 			db = db.Scopes(repo.WrapperDateRangeActive(t, t.AddDate(0, 0, 1)))
+		}
+		if len(r.Process) == 8 {
+			t, err := time.Parse("20060102", r.Process)
+			if err == nil {
+				db = db.Where("complete_at>=? and complete_at<?", t, t.AddDate(0, 0, 1))
+			}
 		}
 		return db
 	}

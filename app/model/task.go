@@ -4,15 +4,16 @@ import "time"
 
 type Task struct {
 	Model
-	ParentId uint       `json:"parent_id" gorm:"not null"`
-	Point    uint8      `json:"point" gorm:"default=100;not null"`
-	IsCheck  bool       `json:"is_check" gorm:"not null"`
-	Star     uint8      `json:"star" gorm:"not null"`
-	Category string     `json:"category" gorm:"not null"`
-	Title    string     `json:"title" gorm:"not null"`
-	Detail   string     `json:"detail" gorm:"not null"`
-	StartAt  time.Time  `json:"start_at" gorm:"not null"`
-	Deadline *time.Time `json:"deadline"`
+	ParentId   uint       `json:"parent_id" gorm:"not null"`
+	Point      uint8      `json:"point" gorm:"default=100;not null"`
+	IsCheck    bool       `json:"is_check" gorm:"not null"`
+	Star       uint8      `json:"star" gorm:"not null"`
+	Category   string     `json:"category" gorm:"not null"`
+	Title      string     `json:"title" gorm:"not null"`
+	Detail     string     `json:"detail" gorm:"not null"`
+	StartAt    time.Time  `json:"start_at" gorm:"not null"`
+	CompleteAt *time.Time `json:"complete_at"`
+	Deadline   *time.Time `json:"deadline"`
 
 	SubTask []Task `json:"sub_task" gorm:"foreignKey:ParentId"`
 }

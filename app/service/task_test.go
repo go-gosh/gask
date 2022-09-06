@@ -113,6 +113,100 @@ func (t *_testTaskSuite) Test_Paginate_DefaultTaskWhenJustFillData() {
 	}
 }
 
+func point[T any](t T) *T {
+	return &t
+}
+
+func (t *_testTaskSuite) Test_Paginate_ShowWhenQueryProcess() {
+	timeFunc := func(s string) *time.Time {
+		t1, err := time.Parse("2006-01-02 15:04:05", s)
+		t.Require().NoError(err)
+		return point(t1)
+	}
+	data := []model.Task{
+		{
+			ParentId:   0,
+			Category:   "root",
+			Title:      "task-1",
+			Detail:     "detail-1",
+			CompleteAt: timeFunc("2022-09-10 15:04:05"),
+		},
+		{
+			ParentId:   1,
+			Category:   "task-1",
+			Title:      "task-2",
+			Detail:     "detail-2",
+			CompleteAt: timeFunc("2022-09-01 15:04:05"),
+		},
+		{
+			ParentId:   1,
+			Category:   "task-1",
+			Title:      "task-3",
+			Detail:     "detail-3",
+			CompleteAt: timeFunc("2022-09-11 15:04:05"),
+		},
+		{
+			ParentId:   1,
+			Category:   "task-1",
+			Title:      "task-4",
+			Detail:     "detail-4",
+			CompleteAt: nil,
+		},
+		{
+			ParentId:   0,
+			Category:   "root",
+			Title:      "task-5",
+			Detail:     "detail-5",
+			CompleteAt: nil,
+		},
+		{
+			ParentId:   5,
+			Category:   "task-5",
+			Title:      "task-6",
+			Detail:     "detail-6",
+			CompleteAt: timeFunc("2022-09-11 15:04:05"),
+		},
+	}
+	t.Require().NoError(t.db.Create(&data).Error)
+	expected, err := Map(data, t.svc.NewTaskViewResp)
+	t.Require().NoError(err)
+
+	reqFunc := func(param string) mapper.CRUDPageResult[TaskViewResp] {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/task"+param, nil)
+		t.engine.ServeHTTP(w, req)
+		t.Require().Equal(http.StatusOK, w.Code)
+		body := mapper.CRUDPageResult[TaskViewResp]{}
+		t.Require().NoError(json.Unmarshal(w.Body.Bytes(), &body))
+		return body
+	}
+
+	t.Run("Test_Paginate_NoProcessDay", func() {
+		b := reqFunc("?process=20220902")
+		t.EqualValues(0, b.Total)
+		t.Len(b.Data, 0)
+	})
+	t.Run("Test_Paginate_OneSubProcessDay1", func() {
+		b := reqFunc("?process=20220901")
+		t.EqualValues(1, b.Total)
+		t.Len(b.Data, 1)
+		t.EqualValues(expected[1], b.Data[0])
+	})
+	t.Run("Test_Paginate_OneSubProcessDay2", func() {
+		b := reqFunc("?process=20220910")
+		t.EqualValues(1, b.Total)
+		t.Len(b.Data, 1)
+		t.EqualValues(expected[0], b.Data[0])
+	})
+	t.Run("Test_Paginate_ManyTaskProcessDay", func() {
+		b := reqFunc("?process=20220911")
+		t.EqualValues(2, b.Total)
+		t.Len(b.Data, 2)
+		t.EqualValues(expected[5], b.Data[0])
+		t.EqualValues(expected[2], b.Data[1])
+	})
+}
+
 func (t *_testTaskSuite) Test_Paginate_SubTaskWhenHasData() {
 	roots := make([]model.Task, 0, 10)
 	for i := 0; i < 10; i++ {

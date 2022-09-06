@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
+	"github.com/go-gosh/gask/app/util"
 	"github.com/go-gosh/gestful/component/mapper"
 	"github.com/go-gosh/gestful/component/service"
 	"github.com/stretchr/testify/suite"
@@ -103,7 +104,7 @@ func (t *_testTaskSuite) Test_Paginate_DefaultTaskWhenJustFillData() {
 	t.EqualValues(10, body.Total)
 	t.EqualValues(1, body.TotalPage)
 	t.Len(body.Data, service.DefaultPageLimit)
-	view, err := Map(data, t.svc.NewTaskViewResp)
+	view, err := util.Map(data, t.svc.NewTaskViewResp)
 	t.Require().NoError(err)
 	for i, v := range body.Data {
 		taskStr, err := json.Marshal(view[i])
@@ -167,7 +168,7 @@ func (t *_testTaskSuite) Test_Paginate_ShowWhenQueryProcess() {
 		},
 	}
 	t.Require().NoError(t.db.Create(&data).Error)
-	expected, err := Map(data, t.svc.NewTaskViewResp)
+	expected, err := util.Map(data, t.svc.NewTaskViewResp)
 	t.Require().NoError(err)
 
 	reqFunc := func(param string) mapper.CRUDPageResult[TaskViewResp] {
@@ -291,7 +292,7 @@ func (t *_testTaskSuite) Test_Paginate_11RootTaskWhenMoreData() {
 	t.EqualValues(12, body.Total)
 	t.EqualValues(2, body.TotalPage)
 	t.Len(body.Data, 11)
-	view, err := Map(data, t.svc.NewTaskViewResp)
+	view, err := util.Map(data, t.svc.NewTaskViewResp)
 	t.Require().NoError(err)
 	for i, v := range body.Data {
 		taskStr, err := json.Marshal(view[i])

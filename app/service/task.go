@@ -18,15 +18,32 @@ type TaskPageRequest struct {
 	mapper.CRUDPageResult[TaskViewResp]
 	ParentId *uint    `json:"parent_id" form:"parent_id"`
 	OrderBy  []string `form:"order_by"`
+	Datetime string   `json:"datetime" form:"datetime"`
 }
 
 func (r TaskPageRequest) MakeWrapper() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		db = r.orderFunc(db)
-		if r.ParentId == nil {
-			return db
+		if r.ParentId != nil {
+			db = db.Where("parent_id=?", *r.ParentId)
 		}
-		return db.Where("parent_id=?", *r.ParentId)
+		switch len(r.Datetime) {
+		case 6:
+			// Monthly
+			t, err := time.Parse("200601", r.Datetime)
+			if err != nil {
+				break
+			}
+			db = db.Scopes(repo.WrapperDateRangeActive(t, t.AddDate(0, 1, 0)))
+		case 8:
+			// Daily
+			t, err := time.Parse("20060102", r.Datetime)
+			if err != nil {
+				break
+			}
+			db = db.Scopes(repo.WrapperDateRangeActive(t, t.AddDate(0, 0, 1)))
+		}
+		return db
 	}
 }
 

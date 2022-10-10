@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type milestone struct {
+type Milestone struct {
 	Model
 	Point     int       `gorm:"not null"`
 	Title     string    `gorm:"not null"`

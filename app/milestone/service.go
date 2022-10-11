@@ -100,8 +100,8 @@ func (s Service) CompleteCheckpointById(id uint, timestamp time.Time) error {
 	})
 }
 
-func (s Service) ViewAllMilestone() ([]map[string]interface{}, error) {
-	m := make([]map[string]interface{}, 0)
+func (s Service) ViewAllMilestone() ([]View, error) {
+	m := make([]View, 0)
 	q := s.db.Model(&model.Checkpoint{}).Select("SUM(point) AS progress, milestone_id").Group("milestone_id")
 	err := s.db.Model(&model.Milestone{}).Select("milestone.*, q.progress").Joins("LEFT JOIN (?) AS q ON q.milestone_id=milestone.id", q).Find(&m).Error
 	return m, err

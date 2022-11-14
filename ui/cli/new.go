@@ -11,7 +11,7 @@ import (
 
 const DefaultTimeLayout = "2006-01-02"
 
-var newMilestoneQestions = []*survey.Question{
+var newMilestoneQuestions = []*survey.Question{
 	{
 		Name:      "title",
 		Prompt:    &survey.Input{Message: "Title"},
@@ -61,7 +61,7 @@ var newMilestoneQestions = []*survey.Question{
 func NewMilestone(svc *milestone.Service) error {
 	// input
 	input := milestone.Create{}
-	err := survey.Ask(newMilestoneQestions, &input)
+	err := survey.Ask(newMilestoneQuestions, &input)
 	if err != nil {
 		return err
 	}

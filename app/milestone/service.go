@@ -113,3 +113,11 @@ func (s Service) updateMilestoneProgress(tx *query.Query, id uint, point int) er
 func (s Service) ViewAllMilestone() ([]*model.Milestone, error) {
 	return s.q.Milestone.Order(query.Milestone.ID.Desc()).Find()
 }
+
+func (s Service) Paginate(page int, limit int) ([]*model.Milestone, int64, error) {
+	offset := 0
+	if page > 1 {
+		offset = limit * (page - 1)
+	}
+	return s.q.Milestone.Order(s.q.Milestone.ID.Desc()).FindByPage(offset, limit)
+}

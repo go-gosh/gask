@@ -4,16 +4,19 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/model"
+	"github.com/go-gosh/gask/app/query"
+	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
 type Create struct {
-	Point     int
-	Title     string
+	Point     int    `validate:"gt=0"`
+	Title     string `validate:"required"`
 	Content   string
-	StartedAt time.Time
-	Deadline  *time.Time
+	StartedAt time.Time  `validate:"required"`
+	Deadline  *time.Time `validate:"omitempty,gtefield=StartedAt"`
 }
 
 type CheckpointCreate struct {
@@ -29,37 +32,35 @@ type View struct {
 }
 
 type Service struct {
-	db *gorm.DB
+	q *query.Query
 }
 
 func New(db *gorm.DB) *Service {
-	return &Service{db: db}
+	return &Service{
+		q: query.Use(db),
+	}
 }
 
 func (s Service) CreateMilestone(create Create) (model.Milestone, error) {
-	m := model.Milestone{
-		Point:     create.Point,
-		Title:     create.Title,
-		Content:   create.Content,
-		StartedAt: create.StartedAt,
-		Deadline:  create.Deadline,
+	err := global.Validate.Struct(create)
+	if err != nil {
+		return model.Milestone{}, err
 	}
-	return m, s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&model.Milestone{}).Create(&m).Error
-	})
+	m := model.Milestone{}
+	err = copier.Copy(&m, &create)
+	if err != nil {
+		return model.Milestone{}, err
+	}
+	return m, s.q.Milestone.Create(&m)
 }
 
-func (s Service) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) (error, []model.Checkpoint) {
-	m := struct {
-		Id    uint
-		Point int
-	}{}
-	err := s.db.Model(&model.Milestone{}).Find(&m, id).Error
+func (s Service) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) (error, []*model.Checkpoint) {
+	m, err := s.q.Milestone.Select(s.q.Milestone.Point, s.q.Milestone.Progress).Where(s.q.Milestone.ID.Eq(id)).First()
 	if err != nil {
 		return err, nil
 	}
-	convert := func(c CheckpointCreate) model.Checkpoint {
-		return model.Checkpoint{
+	convert := func(c CheckpointCreate) *model.Checkpoint {
+		return &model.Checkpoint{
 			Point:       c.Point,
 			MilestoneId: id,
 			Content:     c.Content,
@@ -67,42 +68,48 @@ func (s Service) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints
 			CheckedAt:   c.CheckedAt,
 		}
 	}
-	results := make([]model.Checkpoint, 0, 1+len(checkpoints))
+	results := make([]*model.Checkpoint, 0, 1+len(checkpoints))
 	results = append(results, convert(first))
 	sum := first.Point
 	for _, checkpoint := range checkpoints {
 		sum += checkpoint.Point
 		results = append(results, convert(checkpoint))
 	}
-	if sum > m.Point {
+	if sum > m.Point-m.Progress {
 		return errors.New("total points less than checkpoints"), nil
 	}
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&model.Checkpoint{}).Create(results).Error
-	}), results
+	return s.q.Checkpoint.Create(results...), results
 }
 
 func (s Service) CompleteCheckpointById(id uint, timestamp time.Time) error {
-	c := struct {
-		Id        uint
-		CheckedAt *time.Time
-	}{}
-	err := s.db.Model(&model.Checkpoint{}).First(&c, id).Error
+	c, err := s.q.Checkpoint.Where(query.Checkpoint.ID.Eq(id)).First()
 	if err != nil {
 		return err
 	}
 	if c.CheckedAt != nil {
 		return errors.New("checkpoint already completed")
 	}
-	c.CheckedAt = &timestamp
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(&model.Checkpoint{}).Updates(c).Error
+	return s.q.Transaction(func(tx *query.Query) error {
+		r, err := tx.Checkpoint.
+			Where(query.Checkpoint.ID.Eq(id), query.Checkpoint.CheckedAt.IsNull()).
+			Update(query.Checkpoint.CheckedAt, &timestamp)
+		if err != nil {
+			return err
+		}
+		if r.RowsAffected != 1 {
+			return errors.New("checkpoint already completed")
+		}
+		return s.updateMilestoneProgress(tx, c.MilestoneId, c.Point)
 	})
 }
 
-func (s Service) ViewAllMilestone() ([]View, error) {
-	m := make([]View, 0)
-	q := s.db.Model(&model.Checkpoint{}).Select("SUM(point) AS progress, milestone_id").Group("milestone_id")
-	err := s.db.Model(&model.Milestone{}).Select("milestone.*, q.progress").Joins("LEFT JOIN (?) AS q ON q.milestone_id=milestone.id", q).Find(&m).Error
-	return m, err
+func (s Service) updateMilestoneProgress(tx *query.Query, id uint, point int) error {
+	_, err := tx.Milestone.
+		Where(query.Milestone.ID.Eq(id)).
+		Update(query.Milestone.Progress, query.Milestone.Progress.Add(point))
+	return err
+}
+
+func (s Service) ViewAllMilestone() ([]*model.Milestone, error) {
+	return s.q.Milestone.Order(query.Milestone.ID.Desc()).Find()
 }

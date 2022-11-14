@@ -9,4 +9,5 @@ type Checkpoint struct {
 	Content     string    `gorm:"not null"`
 	JoinedAt    time.Time `gorm:"not null"`
 	CheckedAt   *time.Time
+	Milestone   Milestone
 }

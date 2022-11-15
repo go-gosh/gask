@@ -1,16 +1,19 @@
 package conf
 
 import (
+	"os"
+	"path"
 	"sync"
 
 	"github.com/spf13/viper"
 )
 
 var _once = sync.Once{}
+var homeDir, _ = os.UserHomeDir()
 var config = Config{
 	Port: 8080,
 	Database: Database{
-		File:  "./data.sqlite3",
+		File:  path.Join(homeDir, "gask", "data.sqlite3"),
 		Debug: false,
 	},
 }

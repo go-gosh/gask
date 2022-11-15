@@ -20,6 +20,7 @@ var rootCmd = &cobra.Command{
 2. After a task is created that contains a task volume, the user advances the task by completing the checkpoints it contains. 
 3. You can delete or discard a task or checkpoint at any time. 
 4. You can also browse all tasks and export them.`,
+	SilenceUsage: true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

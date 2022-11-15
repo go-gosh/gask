@@ -11,6 +11,18 @@ import (
 
 const DefaultTimeLayout = "2006-01-02"
 
+func timeValidate(ans interface{}) error {
+	s := ans.(string)
+	_, err := time.Parse(DefaultTimeLayout, s)
+	return err
+}
+
+func timeTransform(ans interface{}) (newAns interface{}) {
+	s := ans.(string)
+	t, _ := time.Parse(DefaultTimeLayout, s)
+	return t
+}
+
 var newMilestoneQuestions = []*survey.Question{
 	{
 		Name:      "title",
@@ -43,18 +55,10 @@ var newMilestoneQuestions = []*survey.Question{
 		Prompt: &survey.Input{Message: "Content"},
 	},
 	{
-		Name:   "startedAt",
-		Prompt: &survey.Input{Message: "Started At", Default: time.Now().Format(DefaultTimeLayout)},
-		Validate: func(ans interface{}) error {
-			s := ans.(string)
-			_, err := time.Parse(DefaultTimeLayout, s)
-			return err
-		},
-		Transform: func(ans interface{}) (newAns interface{}) {
-			s := ans.(string)
-			t, _ := time.Parse(DefaultTimeLayout, s)
-			return t
-		},
+		Name:      "startedAt",
+		Prompt:    &survey.Input{Message: "Started At", Default: time.Now().Format(DefaultTimeLayout)},
+		Validate:  timeValidate,
+		Transform: timeTransform,
 	},
 }
 

@@ -20,10 +20,10 @@ type Create struct {
 }
 
 type CheckpointCreate struct {
-	Point     int
+	Point     int `validate:"gt=0"`
 	Content   string
-	JoinedAt  time.Time
-	CheckedAt *time.Time
+	JoinedAt  time.Time  `validate:"required"`
+	CheckedAt *time.Time `validate:"omitempty,gtefield=JoinedAt"`
 }
 
 type View struct {
@@ -54,31 +54,46 @@ func (s Service) CreateMilestone(create Create) (model.Milestone, error) {
 	return m, s.q.Milestone.Create(&m)
 }
 
-func (s Service) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) (error, []*model.Checkpoint) {
-	m, err := s.q.Milestone.Select(s.q.Milestone.Point, s.q.Milestone.Progress).Where(s.q.Milestone.ID.Eq(id)).First()
+func (s Service) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) ([]*model.Checkpoint, error) {
+	m, err := s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).First()
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	convert := func(c CheckpointCreate) *model.Checkpoint {
-		return &model.Checkpoint{
-			Point:       c.Point,
-			MilestoneId: id,
-			Content:     c.Content,
-			JoinedAt:    c.JoinedAt,
-			CheckedAt:   c.CheckedAt,
+	if err := global.Validate.Struct(first); err != nil {
+		return nil, err
+	}
+	var point int
+	if first.CheckedAt != nil {
+		point += first.Point
+	}
+	inputs := make([]CheckpointCreate, 0, len(checkpoints)+1)
+	inputs = append(inputs, first)
+	for i := range checkpoints {
+		if err := global.Validate.Struct(checkpoints[i]); err != nil {
+			return nil, err
+		}
+		inputs = append(inputs, checkpoints[i])
+		if checkpoints[i].CheckedAt != nil {
+			point += checkpoints[i].Point
 		}
 	}
 	results := make([]*model.Checkpoint, 0, 1+len(checkpoints))
-	results = append(results, convert(first))
-	sum := first.Point
-	for _, checkpoint := range checkpoints {
-		sum += checkpoint.Point
-		results = append(results, convert(checkpoint))
+	if err := copier.Copy(&results, &inputs); err != nil {
+		return nil, err
 	}
-	if sum > m.Point-m.Progress {
-		return errors.New("total points less than checkpoints"), nil
+	if err := s.q.Transaction(func(tx *query.Query) error {
+		if err := tx.Milestone.Checkpoints.Model(m).Append(results...); err != nil {
+			return err
+		}
+		if point > 0 {
+			_, err := tx.Milestone.Where(tx.Milestone.ID.Eq(m.ID)).Update(tx.Milestone.Progress, tx.Milestone.Progress.Add(point))
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
-	return s.q.Checkpoint.Create(results...), results
+	return results, err
 }
 
 func (s Service) CompleteCheckpointById(id uint, timestamp time.Time) error {

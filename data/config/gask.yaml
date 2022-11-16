@@ -1,5 +1,0 @@
-server:
-  port: 8000
-  database:
-    file: ./temp/data.sqlite3
-    debug: true

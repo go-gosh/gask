@@ -12,20 +12,20 @@ var _once = sync.Once{}
 var homeDir, _ = os.UserHomeDir()
 var config = Config{
 	Port: 8080,
-	Database: Database{
+	Database: database{
 		File:  path.Join(homeDir, "gask", "data.sqlite3"),
 		Debug: false,
 	},
 }
 
-type Database struct {
+type database struct {
 	File  string `json:"file" yaml:"file"`
 	Debug bool   `json:"debug" yaml:"debug"`
 }
 
 type Config struct {
 	Port     int      `json:"port" yaml:"port"`
-	Database Database `json:"database" yaml:"database"`
+	Database database `json:"database" yaml:"database"`
 }
 
 func load() {

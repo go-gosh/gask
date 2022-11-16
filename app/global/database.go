@@ -20,7 +20,10 @@ func GetDatabase() (*gorm.DB, error) {
 			return nil, err
 		}
 	}
-	db, err := gorm.Open(sqlite.Open(database.File), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(database.File), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+		QueryFields:                              true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("<file:%s> %w", database.File, err)
 	}

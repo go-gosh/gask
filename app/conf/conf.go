@@ -36,6 +36,9 @@ func load() {
 			panic(err)
 		}
 	}
+	if viper.GetBool("debug") {
+		config.Database.Debug = true
+	}
 }
 
 func GetConfig() Config {

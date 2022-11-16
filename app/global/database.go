@@ -5,10 +5,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/go-gosh/gask/app/conf"
-	"github.com/go-gosh/gask/app/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"github.com/go-gosh/gask/app/conf"
+	"github.com/go-gosh/gask/app/model"
 )
 
 func GetDatabase() (*gorm.DB, error) {

@@ -10,7 +10,10 @@ import (
 	"github.com/go-gosh/gask/app/query"
 )
 
-var cfgFile string
+var (
+	cfgFile   string
+	debugMode bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -46,6 +49,8 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gask.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "debug info")
+	cobra.CheckErr(viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug")))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -67,7 +72,7 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
+	if err := viper.ReadInConfig(); err == nil && debugMode {
 		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 	cobra.CheckErr(query.Setup())

@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/go-gosh/gask/app/query"
 )
 
 var cfgFile string
@@ -20,6 +22,10 @@ var rootCmd = &cobra.Command{
 2. After a task is created that contains a task volume, the user advances the task by completing the checkpoints it contains. 
 3. You can delete or discard a task or checkpoint at any time. 
 4. You can also browse all tasks and export them.`,
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+		HiddenDefaultCmd:  true,
+	},
 	SilenceUsage: true,
 }
 
@@ -40,10 +46,6 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gask.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -68,4 +70,5 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+	cobra.CheckErr(query.Setup())
 }

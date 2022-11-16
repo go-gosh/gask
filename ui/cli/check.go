@@ -4,16 +4,17 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/go-gosh/gask/app/milestone"
+
+	"github.com/go-gosh/gask/app/service"
 )
 
-func CheckMilestone(svc *milestone.Service) error {
+func CheckMilestone(svc *service.Milestone) error {
 	var id uint
 	err := survey.AskOne(&survey.Input{Message: "milestone id"}, &id, survey.WithValidator(survey.Required))
 	if err != nil {
 		return err
 	}
-	create := milestone.CheckpointCreate{}
+	create := service.CheckpointCreate{}
 	qs := []*survey.Question{
 		{
 			Name:   "Point",

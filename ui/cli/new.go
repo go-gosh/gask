@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/go-gosh/gask/app/milestone"
+	"github.com/go-gosh/gask/app/service"
 )
 
 const DefaultTimeLayout = "2006-01-02"
@@ -62,9 +62,9 @@ var newMilestoneQuestions = []*survey.Question{
 	},
 }
 
-func NewMilestone(svc *milestone.Service) error {
+func NewMilestone(svc *service.Milestone) error {
 	// input
-	input := milestone.Create{}
+	input := service.Create{}
 	err := survey.Ask(newMilestoneQuestions, &input)
 	if err != nil {
 		return err

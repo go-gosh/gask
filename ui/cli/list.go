@@ -3,11 +3,11 @@ package cli
 import (
 	"os"
 
-	"github.com/go-gosh/gask/app/milestone"
+	"github.com/go-gosh/gask/app/service"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-func PaginateMilestone(svc *milestone.Service, page, limit int) error {
+func PaginateMilestone(svc *service.Milestone, page, limit int) error {
 	data, count, err := svc.Paginate(page, limit)
 	if err != nil {
 		return err

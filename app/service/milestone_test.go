@@ -1,21 +1,23 @@
-package milestone
+package service
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/go-gosh/gask/app/model"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+
+	"github.com/go-gosh/gask/app/model"
+	"github.com/go-gosh/gask/app/query"
 )
 
 type _testServiceSuite struct {
 	suite.Suite
 	db  *gorm.DB
-	svc *Service
+	svc *Milestone
 }
 
 func (s *_testServiceSuite) SetupTest() {
@@ -27,7 +29,7 @@ func (s *_testServiceSuite) SetupTest() {
 	s.Require().NoError(err)
 	s.db = s.db.Debug()
 	s.Require().NoError(s.db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{}))
-	s.svc = New(s.db)
+	s.svc = NewMilestone(query.Use(s.db))
 }
 
 func (s *_testServiceSuite) TearDownTest() {
@@ -71,11 +73,6 @@ func (s *_testServiceSuite) TestViewAllMilestone() {
 			JoinedAt:  now,
 			CheckedAt: &now,
 		})
-	}
-	views, err := s.svc.ViewAllMilestone()
-	s.NoError(err)
-	for _, view := range views {
-		s.T().Logf("%+v", view)
 	}
 }
 

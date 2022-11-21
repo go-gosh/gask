@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -21,14 +20,15 @@ func PaginateMilestone(svc *service.Milestone, page, limit int) error {
 		if datum.Deadline != nil {
 			deadline = datum.Deadline.Format(DefaultTimeLayout)
 		}
-		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, "-", datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
-		for _, c := range datum.Checkpoints {
-			checked := "-"
+		content := "x"
+		if len(datum.Checkpoints) > 0 {
+			c := datum.Checkpoints[0]
 			if c.CheckedAt != nil {
-				checked = c.CheckedAt.Format(DefaultTimeLayout)
+				content = c.CheckedAt.Format(DefaultTimeLayout)
 			}
-			writer.AppendRow(table.Row{datum.ID, fmt.Sprintf("  ->%v", c.ID), c.Point, c.CheckedAt != nil, c.Content, c.JoinedAt.Format(DefaultTimeLayout), checked, c.CreatedAt.Format(DefaultTimeLayout)})
+			content += ":" + c.Content
 		}
+		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, content, datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
 		writer.AppendSeparator()
 	}
 	writer.AppendFooter(table.Row{"", "", "", "", "total page", (int(count) + limit - 1) / limit, "current", page})

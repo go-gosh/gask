@@ -113,5 +113,10 @@ func (s Milestone) Paginate(page int, limit int) ([]*model.Milestone, int64, err
 	if page > 1 {
 		offset = limit * (page - 1)
 	}
-	return s.q.Milestone.Order(s.q.Milestone.ID.Desc()).Preload(s.q.Milestone.Checkpoints).FindByPage(offset, limit)
+	return s.q.Milestone.Order(s.q.Milestone.ID.Desc()).
+		Preload(s.q.Milestone.Checkpoints.Order(
+			s.q.Checkpoint.CheckedAt.IsNull(),
+			s.q.Checkpoint.UpdatedAt.Desc(),
+		)).
+		FindByPage(offset, limit)
 }

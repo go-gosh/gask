@@ -21,13 +21,18 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return cli.PaginateMilestone(service.NewMilestone(query.Q), page, limit)
+		withCheck, err := cmd.Flags().GetBool("checkpoint")
+		if err != nil {
+			return err
+		}
+		return cli.PaginateMilestone(service.NewMilestone(query.Q), page, limit, withCheck)
 	},
 	SilenceUsage: true,
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().IntP("page", "p", 1, "Page of data")
-	listCmd.Flags().IntP("limit", "l", 10, "Limit per page")
+	listCmd.Flags().IntP("page", "p", 1, "page of data")
+	listCmd.Flags().IntP("limit", "l", 10, "limit per page")
+	listCmd.Flags().BoolP("checkpoint", "c", false, "show all checkpoints of milestone")
 }

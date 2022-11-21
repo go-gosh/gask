@@ -1,14 +1,28 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
+	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/service"
 )
 
-func PaginateMilestone(svc *service.Milestone, page, limit int) error {
+func checkpointToString(c *model.Checkpoint) string {
+	if c == nil {
+		return ""
+	}
+	m := "x"
+	t := c.JoinedAt.Format(DefaultTimeLayout)
+	if c.CheckedAt != nil {
+		m = "v"
+		t = c.CheckedAt.Format(DefaultTimeLayout)
+	}
+	return fmt.Sprintf("%s%v:%s", m, c.ID, t)
+}
+func PaginateMilestone(svc *service.Milestone, page, limit int, check bool) error {
 	data, count, err := svc.Paginate(page, limit)
 	if err != nil {
 		return err
@@ -20,13 +34,18 @@ func PaginateMilestone(svc *service.Milestone, page, limit int) error {
 		if datum.Deadline != nil {
 			deadline = datum.Deadline.Format(DefaultTimeLayout)
 		}
-		content := "x"
-		if len(datum.Checkpoints) > 0 {
-			c := datum.Checkpoints[0]
-			if c.CheckedAt != nil {
-				content = c.CheckedAt.Format(DefaultTimeLayout)
+		content := ""
+		for _, checkpoint := range datum.Checkpoints {
+			if content != "" {
+				content += "\n"
 			}
-			content += ":" + c.Content
+			content += checkpointToString(checkpoint)
+			if !check {
+				break
+			}
+		}
+		if content == "" {
+			content = "-"
 		}
 		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, content, datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
 		writer.AppendSeparator()

@@ -21,7 +21,7 @@ func PaginateMilestone(svc *service.Milestone, page, limit int) error {
 		if datum.Deadline != nil {
 			deadline = datum.Deadline.Format(DefaultTimeLayout)
 		}
-		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, datum.Content, datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
+		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, "-", datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
 		for _, c := range datum.Checkpoints {
 			checked := "-"
 			if c.CheckedAt != nil {
@@ -34,13 +34,6 @@ func PaginateMilestone(svc *service.Milestone, page, limit int) error {
 	writer.AppendFooter(table.Row{"", "", "", "", "total page", (int(count) + limit - 1) / limit, "current", page})
 	writer.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, AutoMerge: true},
-		//{Number: 2, AutoMerge: true},
-		//{Number: 3, AutoMerge: true},
-		//{Number: 4, AutoMerge: true},
-		//{Number: 5, AutoMerge: true},
-		//{Number: 6, AutoMerge: true},
-		//{Number: 7, AutoMerge: true},
-		//{Number: 8, AutoMerge: true},
 	})
 	writer.SetStyle(table.StyleLight)
 	writer.SetOutputMirror(os.Stdout)

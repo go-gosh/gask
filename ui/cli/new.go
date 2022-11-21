@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"errors"
-	"strconv"
+	"fmt"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"github.com/go-gosh/gask/app/service"
 )
 
@@ -23,56 +24,49 @@ func timeTransform(ans interface{}) (newAns interface{}) {
 	return t
 }
 
-var newMilestoneQuestions = []*survey.Question{
-	{
-		Name:      "title",
-		Prompt:    &survey.Input{Message: "Title"},
-		Validate:  survey.Required,
-		Transform: survey.Title,
-	},
-	{
-		Name:   "point",
-		Prompt: &survey.Input{Message: "Point", Default: "100"},
-		Validate: func(ans interface{}) error {
-			s := ans.(string)
-			i, err := strconv.Atoi(s)
-			if err != nil {
-				return err
-			}
-			if i <= 0 {
-				return errors.New("point must greater than zero")
-			}
-			return nil
-		},
-		Transform: func(ans interface{}) (newAns interface{}) {
-			s := ans.(string)
-			i, _ := strconv.Atoi(s)
-			return i
-		},
-	},
-	{
-		Name:   "content",
-		Prompt: &survey.Input{Message: "Content"},
-	},
-	{
-		Name:      "startedAt",
-		Prompt:    &survey.Input{Message: "Started At", Default: time.Now().Format(DefaultTimeLayout)},
-		Validate:  timeValidate,
-		Transform: timeTransform,
-	},
-}
-
-func NewMilestone(svc *service.Milestone) error {
+func NewMilestone(svc *service.Milestone, cmd *cobra.Command) error {
 	// input
-	input := service.Create{}
-	err := survey.Ask(newMilestoneQuestions, &input)
-	if err != nil {
-		return err
+	input := service.Create{
+		Point:     getIntFromFlags(cmd.Flags(), "point"),
+		Title:     getStringFromFlags(cmd.Flags(), "title"),
+		StartedAt: getTimeFromFlags(cmd.Flags(), "start"),
+		Deadline:  getTimePFromFlags(cmd.Flags(), "deadline"),
 	}
+
 	// create new
-	_, err = svc.CreateMilestone(input)
+	_, err := svc.CreateMilestone(input)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func getTimePFromFlags(flags *pflag.FlagSet, name string) *time.Time {
+	s := getStringFromFlags(flags, name)
+	if s == "" {
+		return nil
+	}
+	t, err := time.Parse(DefaultTimeLayout, s)
+	cobra.CheckErr(err)
+	return &t
+}
+
+func getTimeFromFlags(flags *pflag.FlagSet, name string) time.Time {
+	s := getTimePFromFlags(flags, name)
+	if s == nil {
+		cobra.CheckErr(fmt.Sprintf("flag %s is requried", name))
+	}
+	return *s
+}
+
+func getIntFromFlags(flags *pflag.FlagSet, name string) int {
+	s, err := flags.GetInt(name)
+	cobra.CheckErr(err)
+	return s
+}
+
+func getStringFromFlags(flags *pflag.FlagSet, name string) string {
+	s, err := flags.GetString(name)
+	cobra.CheckErr(err)
+	return s
 }

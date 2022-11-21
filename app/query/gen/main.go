@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/go-gosh/gask/app/model"
 	"gorm.io/gen"
+
+	"github.com/go-gosh/gask/app/model"
 )
 
 func main() {

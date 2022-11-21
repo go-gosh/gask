@@ -3,8 +3,9 @@ package service
 import "time"
 
 type Create struct {
-	Point     int    `validate:"gt=0"`
-	Title     string `validate:"required"`
+	Point int    `validate:"gt=0"`
+	Title string `validate:"required"`
+	//Deprecated
 	Content   string
 	StartedAt time.Time  `validate:"required"`
 	Deadline  *time.Time `validate:"omitempty,gtefield=StartedAt"`

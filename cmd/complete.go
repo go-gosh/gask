@@ -13,23 +13,27 @@ import (
 	"github.com/go-gosh/gask/ui/cli"
 )
 
-// completeCmd represents the complete command
-var completeCmd = &cobra.Command{
-	Use:   "complete <checkpoint id>",
-	Short: "Complete an unchecked checkpoint of milestone",
-	Args: func(cmd *cobra.Command, args []string) error {
+func checkArgsId(name string) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
-			return fmt.Errorf("requires checkpoint id in first args, only received 0")
+			return fmt.Errorf("requires %s id in first args, only received 0", name)
 		}
 		id, err := strconv.Atoi(args[0])
 		if err != nil {
 			return err
 		}
 		if id <= 0 {
-			return fmt.Errorf("checkpoint id must greater than 0")
+			return fmt.Errorf("%s id must greater than 0", name)
 		}
 		return nil
-	},
+	}
+}
+
+// completeCmd represents the complete command
+var completeCmd = &cobra.Command{
+	Use:   "complete <checkpoint id>",
+	Short: "Complete an unchecked checkpoint of milestone",
+	Args:  checkArgsId("checkpoint"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		svc := service.NewMilestone(query.Q)
 		id, err := strconv.Atoi(args[0])

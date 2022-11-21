@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	"gorm.io/gen/field"
 
 	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/model"
@@ -108,15 +109,28 @@ func (s Milestone) updateMilestoneProgress(tx *query.Query, id uint, point int) 
 	return err
 }
 
+func (s Milestone) relatedCheckpointOrder() field.RelationField {
+	return s.q.Milestone.Checkpoints.Order(
+		s.q.Checkpoint.CheckedAt.IsNull(),
+		s.q.Checkpoint.UpdatedAt.Desc(),
+	)
+}
+
 func (s Milestone) Paginate(page int, limit int) ([]*model.Milestone, int64, error) {
 	offset := 0
 	if page > 1 {
 		offset = limit * (page - 1)
 	}
 	return s.q.Milestone.Order(s.q.Milestone.ID.Desc()).
-		Preload(s.q.Milestone.Checkpoints.Order(
-			s.q.Checkpoint.CheckedAt.IsNull(),
-			s.q.Checkpoint.UpdatedAt.Desc(),
-		)).
+		Preload(s.relatedCheckpointOrder()).
 		FindByPage(offset, limit)
+}
+
+func (s Milestone) DeleteById(id uint) error {
+	_, err := s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).Delete()
+	return err
+}
+
+func (s Milestone) RetrieveById(id uint) (*model.Milestone, error) {
+	return s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).Preload(s.relatedCheckpointOrder()).First()
 }

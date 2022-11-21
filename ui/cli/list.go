@@ -22,6 +22,7 @@ func checkpointToString(c *model.Checkpoint) string {
 	}
 	return fmt.Sprintf("%s%v:%s", m, c.ID, t)
 }
+
 func PaginateMilestone(svc *service.Milestone, page, limit int, check bool) error {
 	data, count, err := svc.Paginate(page, limit)
 	if err != nil {

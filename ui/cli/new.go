@@ -10,7 +10,7 @@ import (
 	"github.com/go-gosh/gask/app/service"
 )
 
-const DefaultTimeLayout = "2006-01-02"
+const DefaultTimeLayout = "2006-01-02 15:04:05"
 
 func timeValidate(ans interface{}) error {
 	s := ans.(string)

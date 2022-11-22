@@ -1,11 +1,14 @@
 package service
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gen/field"
+	"gorm.io/gorm"
 
 	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/model"
@@ -13,13 +16,16 @@ import (
 )
 
 func NewMilestone(q *query.Query) *Milestone {
+	db, _ := global.GetDatabase()
 	return &Milestone{
-		q: q,
+		q:  q,
+		db: db,
 	}
 }
 
 type Milestone struct {
-	q *query.Query
+	q  *query.Query
+	db *gorm.DB
 }
 
 func (s Milestone) CreateMilestone(create Create) (model.Milestone, error) {
@@ -133,4 +139,26 @@ func (s Milestone) DeleteById(id uint) error {
 
 func (s Milestone) RetrieveById(id uint) (*model.Milestone, error) {
 	return s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).Preload(s.relatedCheckpointOrder()).First()
+}
+
+func (s Milestone) uncheckedCheckpoints(t time.Time) query.ICheckpointDo {
+	ck := s.q.Checkpoint
+	return ck.Where(ck.JoinedAt.Gte(t)).Order(ck.CheckedAt.IsNotNull(), field.NewField("", fmt.Sprintf("DATE(joined_at)-DATE('%s')", t.Format("2006-01-02 15:04:05"))), ck.UpdatedAt.Desc())
+}
+
+func (s Milestone) checkedCheckpoints(t time.Time) query.ICheckpointDo {
+	ck := s.q.Checkpoint
+	return ck.Where(ck.CheckedAt.IsNotNull(), ck.JoinedAt.Lt(t)).Order(ck.CheckedAt, ck.UpdatedAt.Desc())
+}
+
+func (s Milestone) PaginateCheckpoints(page int, limit int, t time.Time) ([]*CheckpointView, int64, error) {
+	offset := 0
+	if page > 1 {
+		offset = limit * (page - 1)
+	}
+	result := make([]*CheckpointView, 0, limit)
+	var count int64
+	db := s.db.Model(&model.Checkpoint{}).Preload("Milestone").Select("*, julianday(joined_at) - julianday(?) as diff", t).Order("`checked_at` is not null, `checked_at` desc, `diff`, `updated_at` desc").WithContext(context.Background())
+	err := db.Count(&count).Offset(offset).Limit(limit).Find(&result).Error
+	return result, count, err
 }

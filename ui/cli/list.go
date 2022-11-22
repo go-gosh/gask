@@ -21,7 +21,7 @@ func checkpointToString(c *model.Checkpoint) string {
 		m = "v"
 		t = c.CheckedAt.Format(DefaultTimeLayout)
 	}
-	return fmt.Sprintf("%s%v:%s", m, c.ID, t)
+	return fmt.Sprintf("%s%v->%s:%s", m, c.ID, t, c.Content)
 }
 
 func PaginateCheckpoint(svc *service.Milestone, page, limit int) error {

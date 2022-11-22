@@ -24,10 +24,10 @@ func checkpointToString(c *model.Checkpoint) string {
 	return fmt.Sprintf("%s%v->%s:%s", m, c.ID, t, c.Content)
 }
 
-func PaginateCheckpoint(svc *service.Milestone, page, limit int) error {
+func PaginateCheckpoint(svc *service.Milestone, page, limit int, q service.CheckpointQuery) error {
 	t := time.Now()
-	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-	data, count, err := svc.PaginateCheckpoints(page, limit, t)
+	q.Timestamp = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	data, count, err := svc.PaginateCheckpoints(page, limit, q)
 	if err != nil {
 		return err
 	}

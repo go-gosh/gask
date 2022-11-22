@@ -26,3 +26,8 @@ type CheckpointView struct {
 	model.Checkpoint
 	Diff int
 }
+
+type CheckpointQuery struct {
+	Timestamp   time.Time
+	MilestoneId uint
+}

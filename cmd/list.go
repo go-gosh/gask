@@ -36,6 +36,9 @@ var listCheckpointCmd = &cobra.Command{
 			service.NewMilestone(query.Q),
 			mustGetFlag(cmd.Flags().GetInt("page")),
 			mustGetFlag(cmd.Flags().GetInt("limit")),
+			service.CheckpointQuery{
+				MilestoneId: mustGetFlag(cmd.Flags().GetUint("milestone")),
+			},
 		)
 	},
 }
@@ -48,4 +51,5 @@ func init() {
 	listCmd.Flags().IntP("limit", "l", 10, "limit per page")
 	listCheckpointCmd.Flags().IntP("limit", "l", 10, "limit per page")
 	listCmd.Flags().BoolP("checkpoint", "c", false, "show all checkpoints of milestone")
+	listCheckpointCmd.Flags().UintP("milestone", "m", 0, "filter by milestone id")
 }

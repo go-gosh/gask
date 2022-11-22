@@ -151,14 +151,17 @@ func (s Milestone) checkedCheckpoints(t time.Time) query.ICheckpointDo {
 	return ck.Where(ck.CheckedAt.IsNotNull(), ck.JoinedAt.Lt(t)).Order(ck.CheckedAt, ck.UpdatedAt.Desc())
 }
 
-func (s Milestone) PaginateCheckpoints(page int, limit int, t time.Time) ([]*CheckpointView, int64, error) {
+func (s Milestone) PaginateCheckpoints(page int, limit int, q CheckpointQuery) ([]*CheckpointView, int64, error) {
 	offset := 0
 	if page > 1 {
 		offset = limit * (page - 1)
 	}
 	result := make([]*CheckpointView, 0, limit)
 	var count int64
-	db := s.db.Model(&model.Checkpoint{}).Preload("Milestone").Select("*, julianday(joined_at) - julianday(?) as diff", t).Order("`checked_at` is not null, `checked_at` desc, `diff`, `updated_at` desc").WithContext(context.Background())
+	db := s.db.Model(&model.Checkpoint{}).Preload("Milestone").Select("*, julianday(joined_at) - julianday(?) as diff", q.Timestamp).Order("`checked_at` is not null, `checked_at` desc, `diff`, `updated_at` desc").WithContext(context.Background())
+	if q.MilestoneId != 0 {
+		db = db.Where("milestone_id = ?", q.MilestoneId)
+	}
 	err := db.Count(&count).Offset(offset).Limit(limit).Find(&result).Error
 	return result, count, err
 }

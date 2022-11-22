@@ -24,7 +24,7 @@ type CheckpointCreate struct {
 
 type CheckpointView struct {
 	model.Checkpoint
-	Diff int
+	Diff float64
 }
 
 type CheckpointQuery struct {

@@ -13,7 +13,56 @@ import (
 	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/query"
+	"github.com/go-gosh/gask/app/repo"
 )
+
+type IMilestone interface {
+	Create(ctx context.Context, create MilestoneCreate) (*MilestoneView, error)
+	FindByPage(ctx context.Context, query *MilestoneQuery) (*repo.Paginator[MilestoneView], error)
+	DeleteById(ctx context.Context, id uint, ids ...uint) error
+	OneById(ctx context.Context, id uint) (*MilestoneView, error)
+	UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error
+}
+
+func NewMilestoneV2(db *gorm.DB) IMilestone {
+	return &milestone{db: db}
+}
+
+type milestone struct {
+	db *gorm.DB
+}
+
+func (m milestone) Create(ctx context.Context, create MilestoneCreate) (*MilestoneView, error) {
+	entity, err := repo.CreateEntity[model.Milestone](create)
+	if err != nil {
+		return nil, err
+	}
+	return &MilestoneView{Milestone: *entity}, m.db.WithContext(ctx).Create(&entity).Error
+}
+
+func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo.Paginator[MilestoneView], error) {
+	db := m.db.Session(&gorm.Session{}).Model(&model.Milestone{})
+	// build query conditions.
+	if query != nil {
+		db = query.injectDB(db)
+	}
+	return repo.FindEntityByPage[MilestoneView](repo.CtxWithDB(ctx, db), query.Page, query.PageSize)
+}
+
+func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m milestone) UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error {
+	//TODO implement me
+	panic("implement me")
+}
 
 func NewMilestone(q *query.Query) *Milestone {
 	db, _ := global.GetDatabase()

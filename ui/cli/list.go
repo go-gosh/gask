@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -51,35 +52,22 @@ func PaginateCheckpoint(svc *service.Milestone, page, limit int, q service.Check
 	return nil
 }
 
-func PaginateMilestone(svc *service.Milestone, page, limit int, check bool) error {
-	data, count, err := svc.Paginate(page, limit)
+func PaginateMilestone(ctx context.Context, svc service.IMilestone, q *service.MilestoneQuery) error {
+	result, err := svc.FindByPage(ctx, q)
 	if err != nil {
 		return err
 	}
 	writer := table.NewWriter()
 	writer.AppendHeader(table.Row{"#", "title", "point", "progress", "content", "started at", "deadline", "created at"}, table.RowConfig{AutoMerge: true})
-	for _, datum := range data {
+	for _, datum := range result.Data {
 		deadline := "-"
 		if datum.Deadline != nil {
 			deadline = datum.Deadline.Format(DefaultTimeLayout)
 		}
-		content := ""
-		for _, checkpoint := range datum.Checkpoints {
-			if content != "" {
-				content += "\n"
-			}
-			content += checkpointToString(checkpoint)
-			if !check {
-				break
-			}
-		}
-		if content == "" {
-			content = "-"
-		}
-		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, content, datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
+		writer.AppendRow(table.Row{datum.ID, datum.Title, datum.Point, datum.Progress, "-", datum.StartedAt.Format(DefaultTimeLayout), deadline, datum.CreatedAt.Format(DefaultTimeLayout)})
 		writer.AppendSeparator()
 	}
-	writer.AppendFooter(table.Row{"", "", "", "", "total page", (int(count) + limit - 1) / limit, "current", page})
+	writer.AppendFooter(table.Row{"", "", "", "", "total page", (result.Total-1)/result.PageSize + 1, "current", result.Page})
 	writer.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, AutoMerge: true},
 	})

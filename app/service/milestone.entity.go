@@ -3,7 +3,11 @@ package service
 import (
 	"time"
 
+	"gorm.io/gorm"
+
+	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/model"
+	"github.com/go-gosh/gask/app/repo"
 )
 
 type Create struct {
@@ -15,19 +19,36 @@ type Create struct {
 	Deadline  *time.Time `validate:"omitempty,gtefield=StartedAt"`
 }
 
-type CheckpointCreate struct {
-	Point     int `validate:"gt=0"`
-	Content   string
-	JoinedAt  time.Time  `validate:"required"`
-	CheckedAt *time.Time `validate:"omitempty,gtefield=JoinedAt"`
+type MilestoneQuery struct {
+	repo.Pager
+	OrderBy []string
+	scopes  []func(db *gorm.DB) *gorm.DB
 }
 
-type CheckpointView struct {
-	model.Checkpoint
-	Diff float64
+func (q *MilestoneQuery) add(scope func(db *gorm.DB) *gorm.DB) *MilestoneQuery {
+	q.scopes = append(q.scopes, scope)
+	return q
 }
 
-type CheckpointQuery struct {
-	Timestamp   time.Time
-	MilestoneId uint
+func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
+	if len(q.OrderBy) == 0 {
+		q.add(func(db *gorm.DB) *gorm.DB {
+			return db.Order(tk.DefaultOrderBy)
+		})
+	} else {
+		q.add(func(db *gorm.DB) *gorm.DB {
+			return db.Order(tk.ArrayToQueryOrder(q.OrderBy))
+		})
+	}
+	return db.Scopes(q.scopes...)
+}
+
+type MilestoneView struct {
+	model.Milestone
+}
+
+type MilestoneUpdate struct {
+}
+
+type MilestoneCreate struct {
 }

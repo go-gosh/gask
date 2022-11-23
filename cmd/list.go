@@ -3,7 +3,10 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
+	tk "github.com/go-gosh/gask/app/common/toolkit"
+	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/query"
+	"github.com/go-gosh/gask/app/repo"
 	"github.com/go-gosh/gask/app/service"
 	"github.com/go-gosh/gask/ui/cli"
 )
@@ -19,10 +22,14 @@ var listCmd = &cobra.Command{
 	Short: "List all milestones",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.PaginateMilestone(
-			service.NewMilestone(query.Q),
-			mustGetFlag(cmd.Flags().GetInt("page")),
-			mustGetFlag(cmd.Flags().GetInt("limit")),
-			mustGetFlag(cmd.Flags().GetBool("checkpoint")),
+			cmd.Context(),
+			service.NewMilestoneV2(tk.Must(global.GetDatabase())),
+			&service.MilestoneQuery{
+				Pager: repo.Pager{
+					Page:     tk.Must(cmd.Flags().GetInt("page")),
+					PageSize: tk.Must(cmd.Flags().GetInt("limit")),
+				},
+			},
 		)
 	},
 	SilenceUsage: true,

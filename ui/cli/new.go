@@ -7,10 +7,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/service"
 )
 
-const DefaultTimeLayout = "2006-01-02 15:04:05"
+const DefaultTimeLayout = tk.TimeLayoutFormatMinute
 
 func timeValidate(ans interface{}) error {
 	s := ans.(string)
@@ -24,21 +25,21 @@ func timeTransform(ans interface{}) (newAns interface{}) {
 	return t
 }
 
-func NewMilestone(svc *service.Milestone, cmd *cobra.Command) error {
-	// input
-	input := service.Create{
-		Point:     getIntFromFlags(cmd.Flags(), "point"),
-		Title:     getStringFromFlags(cmd.Flags(), "title"),
-		StartedAt: getTimeFromFlags(cmd.Flags(), "start"),
-		Deadline:  getTimePFromFlags(cmd.Flags(), "deadline"),
+func CreateMilestone(cmd *cobra.Command, svc service.IMilestone) error {
+	var deadline *time.Time
+	d := tk.Must(cmd.Flags().GetString("deadline"))
+	if d != "" {
+		deadline = tk.Pointer(tk.Must(tk.ParseTime(d)))
+	}
+	input := service.MilestoneCreate{
+		Point:     tk.Must(cmd.Flags().GetInt("point")),
+		Title:     tk.Must(cmd.Flags().GetString("title")),
+		StartedAt: tk.Must(tk.ParseTime(tk.Must(cmd.Flags().GetString("start")))),
+		Deadline:  deadline,
 	}
 
-	// create new
-	_, err := svc.CreateMilestone(input)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := svc.Create(cmd.Context(), input)
+	return err
 }
 
 func getTimePFromFlags(flags *pflag.FlagSet, name string) *time.Time {

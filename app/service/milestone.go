@@ -33,11 +33,14 @@ type milestone struct {
 }
 
 func (m milestone) Create(ctx context.Context, create MilestoneCreate) (*MilestoneView, error) {
-	entity, err := repo.CreateEntity[model.Milestone](create)
-	if err != nil {
+	if err := global.Validate.Struct(create); err != nil {
 		return nil, err
 	}
-	return &MilestoneView{Milestone: *entity}, m.db.WithContext(ctx).Create(&entity).Error
+	var entity model.Milestone
+	if err := copier.Copy(&entity, &create); err != nil {
+		return nil, err
+	}
+	return &MilestoneView{Milestone: entity}, m.db.WithContext(ctx).Create(&entity).Error
 }
 
 func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo.Paginator[MilestoneView], error) {
@@ -75,19 +78,6 @@ func NewMilestone(q *query.Query) *Milestone {
 type Milestone struct {
 	q  *query.Query
 	db *gorm.DB
-}
-
-func (s Milestone) CreateMilestone(create Create) (model.Milestone, error) {
-	err := global.Validate.Struct(create)
-	if err != nil {
-		return model.Milestone{}, err
-	}
-	m := model.Milestone{}
-	err = copier.Copy(&m, &create)
-	if err != nil {
-		return model.Milestone{}, err
-	}
-	return m, s.q.Milestone.Create(&m)
 }
 
 func (s Milestone) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) ([]*model.Checkpoint, error) {

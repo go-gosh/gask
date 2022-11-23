@@ -2,22 +2,7 @@ package repo
 
 import (
 	"context"
-
-	"github.com/jinzhu/copier"
-
-	"github.com/go-gosh/gask/app/global"
 )
-
-func CreateEntity[M any](create any) (*M, error) {
-	if err := global.Validate.Struct(create); err != nil {
-		return nil, err
-	}
-	var m M
-	if err := copier.Copy(&m, &create); err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
 
 func FindEntityByPage[V any](ctx context.Context, page, limit int) (*Paginator[V], error) {
 	if page < 1 {

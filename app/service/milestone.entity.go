@@ -10,11 +10,9 @@ import (
 	"github.com/go-gosh/gask/app/repo"
 )
 
-type Create struct {
-	Point int    `validate:"gt=0"`
-	Title string `validate:"required"`
-	//Deprecated
-	Content   string
+type MilestoneCreate struct {
+	Point     int        `validate:"gt=0"`
+	Title     string     `validate:"required"`
 	StartedAt time.Time  `validate:"required"`
 	Deadline  *time.Time `validate:"omitempty,gtefield=StartedAt"`
 }
@@ -48,7 +46,4 @@ type MilestoneView struct {
 }
 
 type MilestoneUpdate struct {
-}
-
-type MilestoneCreate struct {
 }

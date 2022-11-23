@@ -5,7 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/go-gosh/gask/app/query"
+	tk "github.com/go-gosh/gask/app/common/toolkit"
+	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/service"
 	"github.com/go-gosh/gask/ui/cli"
 )
@@ -15,7 +16,7 @@ var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a new milestone",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.NewMilestone(service.NewMilestone(query.Q), cmd)
+		return cli.CreateMilestone(cmd, service.NewMilestoneV2(tk.Must(global.GetDatabase())))
 	},
 }
 

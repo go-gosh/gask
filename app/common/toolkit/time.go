@@ -28,3 +28,14 @@ func ParseTime(s string) (t time.Time, err error) {
 	}
 	return
 }
+
+func ParseTimePointer(s string) (*time.Time, error) {
+	if s == "" {
+		return nil, nil
+	}
+	t, err := ParseTime(s)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}

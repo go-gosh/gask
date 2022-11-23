@@ -45,4 +45,28 @@ type MilestoneView struct {
 }
 
 type MilestoneUpdate struct {
+	CleanDeadline bool
+	Point         *int
+	Title         *string
+	StartedAt     *time.Time
+	Deadline      *time.Time
+}
+
+func (u MilestoneUpdate) updateDB() map[string]any {
+	m := make(map[string]any)
+	if u.CleanDeadline {
+		m["deadline"] = nil
+	} else if u.Deadline != nil {
+		m["deadline"] = *u.Deadline
+	}
+	if u.Title != nil {
+		m["title"] = *u.Title
+	}
+	if u.Point != nil {
+		m["point"] = *u.Point
+	}
+	if u.StartedAt != nil {
+		m["started_at"] = *u.StartedAt
+	}
+	return m
 }

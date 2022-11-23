@@ -3,11 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jinzhu/copier"
-	"gorm.io/gen/field"
 	"gorm.io/gorm"
 
 	"github.com/go-gosh/gask/app/global"
@@ -72,8 +70,7 @@ func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error)
 }
 
 func (m milestone) UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error {
-	//TODO implement me
-	panic("implement me")
+	return m.db.WithContext(ctx).Model(&model.Milestone{}).Where("`id` = ?", id).Updates(updated.updateDB()).Error
 }
 
 func NewMilestone(q *query.Query) *Milestone {
@@ -161,32 +158,6 @@ func (s Milestone) updateMilestoneProgress(tx *query.Query, id uint, point int) 
 		Where(query.Milestone.ID.Eq(id)).
 		Update(query.Milestone.Progress, query.Milestone.Progress.Add(point))
 	return err
-}
-
-func (s Milestone) relatedCheckpointOrder() field.RelationField {
-	return s.q.Milestone.Checkpoints.Order(
-		s.q.Checkpoint.CheckedAt.IsNull(),
-		s.q.Checkpoint.UpdatedAt.Desc(),
-	)
-}
-
-func (s Milestone) DeleteById(id uint) error {
-	_, err := s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).Delete()
-	return err
-}
-
-func (s Milestone) RetrieveById(id uint) (*model.Milestone, error) {
-	return s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).Preload(s.relatedCheckpointOrder()).First()
-}
-
-func (s Milestone) uncheckedCheckpoints(t time.Time) query.ICheckpointDo {
-	ck := s.q.Checkpoint
-	return ck.Where(ck.JoinedAt.Gte(t)).Order(ck.CheckedAt.IsNotNull(), field.NewField("", fmt.Sprintf("DATE(joined_at)-DATE('%s')", t.Format("2006-01-02 15:04:05"))), ck.UpdatedAt.Desc())
-}
-
-func (s Milestone) checkedCheckpoints(t time.Time) query.ICheckpointDo {
-	ck := s.q.Checkpoint
-	return ck.Where(ck.CheckedAt.IsNotNull(), ck.JoinedAt.Lt(t)).Order(ck.CheckedAt, ck.UpdatedAt.Desc())
 }
 
 func (s Milestone) PaginateCheckpoints(page int, limit int, q CheckpointQuery) ([]*CheckpointView, int64, error) {

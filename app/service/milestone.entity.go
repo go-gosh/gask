@@ -5,7 +5,6 @@ import (
 
 	"gorm.io/gorm"
 
-	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
 )
@@ -31,11 +30,11 @@ func (q *MilestoneQuery) add(scope func(db *gorm.DB) *gorm.DB) *MilestoneQuery {
 func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 	if len(q.OrderBy) == 0 {
 		q.add(func(db *gorm.DB) *gorm.DB {
-			return db.Order(tk.DefaultOrderBy)
+			return db.Order(repo.DefaultOrderBy)
 		})
 	} else {
 		q.add(func(db *gorm.DB) *gorm.DB {
-			return db.Order(tk.ArrayToQueryOrder(q.OrderBy))
+			return db.Order(repo.ArrayToQueryOrder(q.OrderBy))
 		})
 	}
 	return db.Scopes(q.scopes...)

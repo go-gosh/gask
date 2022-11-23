@@ -1,4 +1,4 @@
-package tk
+package repo
 
 import "strings"
 

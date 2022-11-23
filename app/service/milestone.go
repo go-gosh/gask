@@ -53,13 +53,22 @@ func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo
 }
 
 func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
-	//TODO implement me
-	panic("implement me")
+	db := m.db.WithContext(ctx)
+	if len(ids) == 0 {
+		db = db.Where("`id` = ?", id)
+	} else {
+		db = db.Where("`id` in ?", append(ids, id))
+	}
+	return db.Delete(&model.Milestone{}).Error
 }
 
 func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {
-	//TODO implement me
-	panic("implement me")
+	result := MilestoneView{}
+	err := m.db.WithContext(ctx).Model(&model.Milestone{}).First(&result, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (m milestone) UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error {

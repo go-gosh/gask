@@ -7,7 +7,8 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 
-	"github.com/go-gosh/gask/app/query"
+	tk "github.com/go-gosh/gask/app/common/toolkit"
+	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/service"
 )
 
@@ -25,15 +26,9 @@ var (
 		Short: "Delete milestone by id",
 		Args:  checkArgsId("milestone"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			id, err := strconv.Atoi(args[0])
-			if err != nil {
-				return err
-			}
-			svc := service.NewMilestone(query.Q)
-			entity, err := svc.RetrieveById(uint(id))
-			if err != nil {
-				return err
-			}
+			id := uint(tk.Must(strconv.Atoi(args[0])))
+			svc := service.NewMilestoneV2(tk.Must(global.GetDatabase()))
+			entity := tk.Must(svc.OneById(cmd.Context(), id))
 			fmt.Printf("Will delete milestone:\nid:%v\ttitle:%v\n\n", entity.ID, entity.Title)
 			if !quiet {
 				var confirm bool
@@ -45,7 +40,7 @@ var (
 					return nil
 				}
 			}
-			return svc.DeleteById(uint(id))
+			return svc.DeleteById(cmd.Context(), id)
 		},
 	}
 )

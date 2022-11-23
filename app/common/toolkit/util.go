@@ -14,3 +14,7 @@ func Must[T any](t T, err error) T {
 func Pointer[T any](t T) *T {
 	return &t
 }
+
+func SetErrorHandler(fn func(err error)) {
+	errorCheck = fn
+}

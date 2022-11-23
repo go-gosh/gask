@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/query"
 )
 
@@ -75,5 +76,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil && debugMode {
 		_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+	tk.SetErrorHandler(func(err error) {
+		cobra.CheckErr(err)
+	})
 	cobra.CheckErr(query.Setup())
 }

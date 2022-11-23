@@ -11,11 +11,6 @@ import (
 	"github.com/go-gosh/gask/ui/cli"
 )
 
-func mustGetFlag[T any](t T, err error) T {
-	cobra.CheckErr(err)
-	return t
-}
-
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -41,10 +36,10 @@ var listCheckpointCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.PaginateCheckpoint(
 			service.NewMilestone(query.Q),
-			mustGetFlag(cmd.Flags().GetInt("page")),
-			mustGetFlag(cmd.Flags().GetInt("limit")),
+			tk.Must(cmd.Flags().GetInt("page")),
+			tk.Must(cmd.Flags().GetInt("limit")),
 			service.CheckpointQuery{
-				MilestoneId: mustGetFlag(cmd.Flags().GetUint("milestone")),
+				MilestoneId: tk.Must(cmd.Flags().GetUint("milestone")),
 			},
 		)
 	},

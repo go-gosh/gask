@@ -1,65 +1,19 @@
 package cli
 
 import (
-	"time"
+	"github.com/spf13/cobra"
 
-	"github.com/AlecAivazis/survey/v2"
-
+	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/service"
 )
 
-func CheckMilestone(svc *service.Milestone) error {
-	var id uint
-	err := survey.AskOne(&survey.Input{Message: "milestone id"}, &id, survey.WithValidator(survey.Required))
-	if err != nil {
-		return err
-	}
-	create := service.CheckpointCreate{}
-	qs := []*survey.Question{
-		{
-			Name:   "Point",
-			Prompt: &survey.Input{Message: "point", Default: "10"},
-		},
-		{
-			Name:   "Content",
-			Prompt: &survey.Input{Message: "content"},
-		},
-		{
-			Name:      "JoinedAt",
-			Prompt:    &survey.Input{Message: "joined at", Default: time.Now().Format(DefaultTimeLayout)},
-			Validate:  timeValidate,
-			Transform: timeTransform,
-		},
-	}
-	err = survey.Ask(qs, &create)
-	if err != nil {
-		return err
-	}
-	var checked bool
-	err = survey.AskOne(&survey.Confirm{Message: "check it"}, &checked)
-	if err != nil {
-		return err
-	}
-	if checked {
-		err = survey.Ask([]*survey.Question{
-			{
-				Name:     "CheckedAt",
-				Prompt:   &survey.Input{Message: "checked at", Default: time.Now().Format(DefaultTimeLayout)},
-				Validate: timeValidate,
-				Transform: func(ans interface{}) (newAns interface{}) {
-					s := ans.(string)
-					t, _ := time.Parse(DefaultTimeLayout, s)
-					return &t
-				},
-			},
-		}, &create.CheckedAt, survey.WithValidator(survey.Required))
-		if err != nil {
-			return err
-		}
-	}
-	_, err = svc.SplitMilestoneById(id, create)
-	if err != nil {
-		return err
-	}
-	return nil
+func CheckMilestone(cmd *cobra.Command, svc service.ICheckpoint, id uint) error {
+	_, err := svc.Create(cmd.Context(), &service.CheckpointCreate{
+		Point:       tk.Must(cmd.Flags().GetInt("point")),
+		Content:     tk.Must(cmd.Flags().GetString("content")),
+		JoinedAt:    tk.Must(tk.ParseTime(tk.Must(cmd.Flags().GetString("joined")))),
+		CheckedAt:   tk.Must(tk.ParseTimePointer(tk.Must(cmd.Flags().GetString("checked")))),
+		MilestoneId: id,
+	})
+	return err
 }

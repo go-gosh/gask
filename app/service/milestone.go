@@ -86,51 +86,6 @@ type Milestone struct {
 	db *gorm.DB
 }
 
-func (s Milestone) SplitMilestoneById(id uint, first CheckpointCreate, checkpoints ...CheckpointCreate) ([]*model.Checkpoint, error) {
-	m, err := s.q.Milestone.Where(s.q.Milestone.ID.Eq(id)).First()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := global.Validate.Struct(first); err != nil {
-		return nil, err
-	}
-
-	var point int
-	if first.CheckedAt != nil {
-		point += first.Point
-	}
-	inputs := make([]CheckpointCreate, 0, len(checkpoints)+1)
-	inputs = append(inputs, first)
-	for i := range checkpoints {
-		if err := global.Validate.Struct(checkpoints[i]); err != nil {
-			return nil, err
-		}
-		inputs = append(inputs, checkpoints[i])
-		if checkpoints[i].CheckedAt != nil {
-			point += checkpoints[i].Point
-		}
-	}
-
-	results := make([]*model.Checkpoint, 0, 1+len(checkpoints))
-	if err := copier.Copy(&results, &inputs); err != nil {
-		return nil, err
-	}
-	err = s.q.Transaction(func(tx *query.Query) error {
-		if err := tx.Milestone.Checkpoints.Model(m).Append(results...); err != nil {
-			return err
-		}
-		if point > 0 {
-			return s.updateMilestoneProgress(tx, m.ID, point)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return results, err
-}
-
 func (s Milestone) CompleteCheckpointById(id uint, timestamp time.Time) error {
 	c, err := s.q.Checkpoint.Where(query.Checkpoint.ID.Eq(id)).First()
 	if err != nil {

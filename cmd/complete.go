@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/go-gosh/gask/app/query"
+	tk "github.com/go-gosh/gask/app/common/toolkit"
+	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/service"
 	"github.com/go-gosh/gask/ui/cli"
 )
@@ -35,25 +35,18 @@ var completeCmd = &cobra.Command{
 	Short: "Complete an unchecked checkpoint of milestone",
 	Args:  checkArgsId("checkpoint"),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		svc := service.NewMilestone(query.Q)
-		id, err := strconv.Atoi(args[0])
-		if err != nil {
-			return err
-		}
-		timeStr, err := cmd.Flags().GetString("time")
-		if err != nil {
-			return err
-		}
-		timestamp, err := time.Parse(cli.DefaultTimeLayout, timeStr)
-		if err != nil {
-			return err
-		}
-		err = svc.CompleteCheckpointById(uint(id), timestamp)
-		if err != nil {
-			return err
-		}
-		log.Printf("Completed checkpoint<%v> at %s", id, timestamp.Format(cli.DefaultTimeLayout))
-		return nil
+		svc := service.NewCheckpoint(tk.Must(global.GetDatabase()))
+		return svc.UpdateById(
+			cmd.Context(),
+			uint(tk.Must(strconv.Atoi(args[0]))),
+			&service.CheckpointUpdate{
+				IsChecked: tk.Pointer(true),
+				Point:     nil,
+				Content:   nil,
+				CheckedAt: tk.Must(tk.ParseTimePointer(tk.Must(cmd.Flags().GetString("time")))),
+				JoinedAt:  nil,
+			},
+		)
 	},
 }
 

@@ -2,15 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 
 	"github.com/go-gosh/gask/app/global"
 	"github.com/go-gosh/gask/app/model"
-	"github.com/go-gosh/gask/app/query"
 	"github.com/go-gosh/gask/app/repo"
 )
 
@@ -65,46 +62,4 @@ func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error)
 
 func (m milestone) UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error {
 	return m.db.WithContext(ctx).Model(&model.Milestone{}).Where("`id` = ?", id).Updates(updated.updateDB()).Error
-}
-
-func NewMilestone(q *query.Query) *Milestone {
-	db, _ := global.GetDatabase()
-	return &Milestone{
-		q:  q,
-		db: db,
-	}
-}
-
-type Milestone struct {
-	q  *query.Query
-	db *gorm.DB
-}
-
-func (s Milestone) CompleteCheckpointById(id uint, timestamp time.Time) error {
-	c, err := s.q.Checkpoint.Where(query.Checkpoint.ID.Eq(id)).First()
-	if err != nil {
-		return err
-	}
-	if c.CheckedAt != nil {
-		return errors.New("checkpoint already completed")
-	}
-	return s.q.Transaction(func(tx *query.Query) error {
-		r, err := tx.Checkpoint.
-			Where(query.Checkpoint.ID.Eq(id), query.Checkpoint.CheckedAt.IsNull()).
-			Update(query.Checkpoint.CheckedAt, &timestamp)
-		if err != nil {
-			return err
-		}
-		if r.RowsAffected != 1 {
-			return errors.New("checkpoint already completed")
-		}
-		return s.updateMilestoneProgress(tx, c.MilestoneId, c.Point)
-	})
-}
-
-func (s Milestone) updateMilestoneProgress(tx *query.Query, id uint, point int) error {
-	_, err := tx.Milestone.
-		Where(query.Milestone.ID.Eq(id)).
-		Update(query.Milestone.Progress, query.Milestone.Progress.Add(point))
-	return err
 }

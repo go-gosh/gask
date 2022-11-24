@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	tk "github.com/go-gosh/gask/app/common/toolkit"
-	"github.com/go-gosh/gask/app/query"
 )
 
 var (
@@ -79,5 +78,4 @@ func initConfig() {
 	tk.SetErrorHandler(func(err error) {
 		cobra.CheckErr(err)
 	})
-	cobra.CheckErr(query.Setup())
 }

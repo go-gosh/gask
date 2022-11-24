@@ -3,7 +3,10 @@ package service
 import (
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/go-gosh/gask/app/model"
+	"github.com/go-gosh/gask/app/repo"
 )
 
 type CheckpointUpdate struct {
@@ -23,6 +26,21 @@ type CheckpointView struct {
 }
 
 type CheckpointQuery struct {
-	Timestamp   time.Time
-	MilestoneId uint
+	repo.Pager
+	Timestamp     *time.Time
+	MilestoneId   uint
+	WithMilestone bool
+}
+
+func (q CheckpointQuery) injectDB(db *gorm.DB) *gorm.DB {
+	if q.Timestamp != nil {
+		db = db.Select("*, julianday(joined_at) - julianday(?) as diff", q.Timestamp)
+	}
+	if q.MilestoneId != 0 {
+		db = db.Where("milestone_id = ?", q.MilestoneId)
+	}
+	if q.WithMilestone {
+		db = db.Preload("Milestone")
+	}
+	return db
 }

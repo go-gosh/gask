@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 
 	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/global"
-	"github.com/go-gosh/gask/app/query"
 	"github.com/go-gosh/gask/app/repo"
 	"github.com/go-gosh/gask/app/service"
 	"github.com/go-gosh/gask/ui/cli"
@@ -35,11 +36,16 @@ var listCheckpointCmd = &cobra.Command{
 	Use: "checkpoint",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.PaginateCheckpoint(
-			service.NewMilestone(query.Q),
-			tk.Must(cmd.Flags().GetInt("page")),
-			tk.Must(cmd.Flags().GetInt("limit")),
-			service.CheckpointQuery{
-				MilestoneId: tk.Must(cmd.Flags().GetUint("milestone")),
+			cmd,
+			service.NewCheckpoint(tk.Must(global.GetDatabase())),
+			&service.CheckpointQuery{
+				Pager: repo.Pager{
+					Page:     tk.Must(cmd.Flags().GetInt("page")),
+					PageSize: tk.Must(cmd.Flags().GetInt("limit")),
+				},
+				MilestoneId:   tk.Must(cmd.Flags().GetUint("milestone")),
+				Timestamp:     tk.Pointer(tk.GetStartOfDay(time.Now())),
+				WithMilestone: true,
 			},
 		)
 	},

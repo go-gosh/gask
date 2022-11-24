@@ -7,34 +7,22 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/spf13/cobra"
 
-	"github.com/go-gosh/gask/app/model"
+	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/service"
 )
 
-func checkpointToString(c *model.Checkpoint) string {
-	if c == nil {
-		return ""
-	}
-	m := "x"
-	t := c.JoinedAt.Format(DefaultTimeLayout)
-	if c.CheckedAt != nil {
-		m = "v"
-		t = c.CheckedAt.Format(DefaultTimeLayout)
-	}
-	return fmt.Sprintf("%s%v->%s:%s", m, c.ID, t, c.Content)
-}
-
-func PaginateCheckpoint(svc *service.Milestone, page, limit int, q service.CheckpointQuery) error {
+func PaginateCheckpoint(cmd *cobra.Command, svc service.ICheckpoint, q *service.CheckpointQuery) error {
 	t := time.Now()
-	q.Timestamp = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-	data, count, err := svc.PaginateCheckpoints(page, limit, q)
+	q.Timestamp = tk.Pointer(time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local))
+	data, err := svc.FindByPage(cmd.Context(), q)
 	if err != nil {
 		return err
 	}
 	writer := table.NewWriter()
 	writer.AppendHeader(table.Row{"#", "title", "point", "content", "joined at", "checked at", "created at"}, table.RowConfig{AutoMerge: true})
-	for _, datum := range data {
+	for _, datum := range data.Data {
 		checkedAt := "-"
 		if datum.CheckedAt != nil {
 			checkedAt = datum.CheckedAt.Format(DefaultTimeLayout)
@@ -42,7 +30,7 @@ func PaginateCheckpoint(svc *service.Milestone, page, limit int, q service.Check
 		writer.AppendRow(table.Row{fmt.Sprintf("%v-%v", datum.MilestoneId, datum.ID), datum.Milestone.Title, datum.Point, datum.Content, datum.JoinedAt.Format(DefaultTimeLayout), checkedAt, datum.CreatedAt.Format(DefaultTimeLayout)})
 		writer.AppendSeparator()
 	}
-	writer.AppendFooter(table.Row{"", "", "", "total page", (int(count) + limit - 1) / limit, "current", page})
+	writer.AppendFooter(table.Row{"", "", "", "total page", (data.Total-1)/data.PageSize + 1, "current", data.Page})
 	writer.SetColumnConfigs([]table.ColumnConfig{
 		{Number: 1, AutoMerge: true},
 	})

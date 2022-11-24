@@ -52,8 +52,12 @@ func (c checkpoint) Create(ctx context.Context, create *CheckpointCreate) (*Chec
 }
 
 func (c checkpoint) FindByPage(ctx context.Context, query *CheckpointQuery) (*repo.Paginator[CheckpointView], error) {
-	//TODO implement me
-	panic("implement me")
+	db := c.db.Session(&gorm.Session{}).Model(&model.Checkpoint{})
+	// build query conditions.
+	if query != nil {
+		db = query.injectDB(db)
+	}
+	return repo.FindEntityByPage[CheckpointView](repo.CtxWithDB(ctx, db), query.Page, query.PageSize)
 }
 
 func (c checkpoint) DeleteById(ctx context.Context, id uint, ids ...uint) error {

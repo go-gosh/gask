@@ -61,13 +61,16 @@ func (c checkpoint) FindByPage(ctx context.Context, query *CheckpointQuery) (*re
 }
 
 func (c checkpoint) DeleteById(ctx context.Context, id uint, ids ...uint) error {
-	//TODO implement me
-	panic("implement me")
+	return repo.WhereInIds(c.db.WithContext(ctx), id, ids...).Delete(&model.Checkpoint{}).Error
 }
 
 func (c checkpoint) OneById(ctx context.Context, id uint) (*CheckpointView, error) {
-	//TODO implement me
-	panic("implement me")
+	result := CheckpointView{}
+	err := c.db.WithContext(ctx).Model(&model.Checkpoint{}).First(&result, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (c checkpoint) UpdateById(ctx context.Context, id uint, updated *CheckpointUpdate) error {

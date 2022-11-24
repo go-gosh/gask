@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+
+	"gorm.io/gorm"
 )
 
 func FindEntityByPage[V any](ctx context.Context, page, limit int) (*Paginator[V], error) {
@@ -28,4 +30,11 @@ func FindEntityByPage[V any](ctx context.Context, page, limit int) (*Paginator[V
 		Total: int(c),
 		Data:  result,
 	}, nil
+}
+
+func WhereInIds(db *gorm.DB, id uint, ids ...uint) *gorm.DB {
+	if len(ids) == 0 {
+		return db.Where("`id` in ?", append(ids, id))
+	}
+	return db.Where("`id` = ?", id)
 }

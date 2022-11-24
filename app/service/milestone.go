@@ -51,13 +51,7 @@ func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo
 }
 
 func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
-	db := m.db.WithContext(ctx)
-	if len(ids) == 0 {
-		db = db.Where("`id` = ?", id)
-	} else {
-		db = db.Where("`id` in ?", append(ids, id))
-	}
-	return db.Delete(&model.Milestone{}).Error
+	return repo.WhereInIds(m.db.WithContext(ctx), id, ids...).Delete(&model.Milestone{}).Error
 }
 
 func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {

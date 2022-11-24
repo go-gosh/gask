@@ -24,7 +24,7 @@ var (
 		Args:  checkArgsId("milestone"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			id := uint(tk.Must(strconv.Atoi(args[0])))
-			svc := service.NewMilestoneV2(tk.Must(global.GetDatabase()))
+			svc := service.NewMilestone(tk.Must(global.GetDatabase()))
 			entity := tk.Must(svc.OneById(cmd.Context(), id))
 			fmt.Printf("Will update milestone:\nid:%v\ttitle:%v\n\n", entity.ID, entity.Title)
 			return svc.UpdateById(cmd.Context(), id, &service.MilestoneUpdate{

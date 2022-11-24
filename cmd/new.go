@@ -16,7 +16,7 @@ var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a new milestone",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.CreateMilestone(cmd, service.NewMilestoneV2(tk.Must(global.GetDatabase())))
+		return cli.CreateMilestone(cmd, service.NewMilestone(tk.Must(global.GetDatabase())))
 	},
 }
 

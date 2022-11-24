@@ -19,7 +19,7 @@ type IMilestone interface {
 	UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error
 }
 
-func NewMilestoneV2(db *gorm.DB) IMilestone {
+func NewMilestone(db *gorm.DB) IMilestone {
 	return &milestone{db: db}
 }
 

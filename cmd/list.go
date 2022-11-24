@@ -19,7 +19,7 @@ var listCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.PaginateMilestone(
 			cmd.Context(),
-			service.NewMilestoneV2(tk.Must(global.GetDatabase())),
+			service.NewMilestone(tk.Must(global.GetDatabase())),
 			&service.MilestoneQuery{
 				Pager: repo.Pager{
 					Page:     tk.Must(cmd.Flags().GetInt("page")),

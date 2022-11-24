@@ -18,8 +18,9 @@ type MilestoneCreate struct {
 
 type MilestoneQuery struct {
 	repo.Pager
-	OrderBy []string
-	scopes  []func(db *gorm.DB) *gorm.DB
+	OrderBy  []string
+	HideDone bool
+	scopes   []func(db *gorm.DB) *gorm.DB
 }
 
 func (q *MilestoneQuery) add(scope func(db *gorm.DB) *gorm.DB) *MilestoneQuery {
@@ -35,6 +36,11 @@ func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 	} else {
 		q.add(func(db *gorm.DB) *gorm.DB {
 			return db.Order(repo.ArrayToQueryOrder(q.OrderBy))
+		})
+	}
+	if q.HideDone {
+		q.scopes = append(q.scopes, func(db *gorm.DB) *gorm.DB {
+			return db.Where("point>progress")
 		})
 	}
 	return db.Scopes(q.scopes...)

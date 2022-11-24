@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sync"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -12,7 +13,12 @@ import (
 	"github.com/go-gosh/gask/app/model"
 )
 
-func GetDatabase() (*gorm.DB, error) {
+var (
+	_once sync.Once
+	_db   *gorm.DB
+)
+
+func setupDatabase() (*gorm.DB, error) {
 	database := conf.GetConfig().Database
 	dir := path.Dir(database.File)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -35,4 +41,12 @@ func GetDatabase() (*gorm.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func GetDatabase() (*gorm.DB, error) {
+	var err error
+	_once.Do(func() {
+		_db, err = setupDatabase()
+	})
+	return _db, err
 }

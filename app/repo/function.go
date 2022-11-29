@@ -33,7 +33,7 @@ func FindEntityByPage[V any](ctx context.Context, page, limit int) (*Paginator[V
 }
 
 func WhereInIds(db *gorm.DB, id uint, ids ...uint) *gorm.DB {
-	if len(ids) == 0 {
+	if len(ids) != 0 {
 		return db.Where("`id` in ?", append(ids, id))
 	}
 	return db.Where("`id` = ?", id)

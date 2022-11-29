@@ -7,12 +7,12 @@ const (
 )
 
 type Pager struct {
-	Page     int
-	PageSize int
+	Page     int `form:"page" json:"page"`
+	PageSize int `form:"pageSize" json:"pageSize"`
 }
 
 type Paginator[T any] struct {
 	Pager
-	Total int
-	Data  []T
+	Total int `json:"total"`
+	Data  []T `json:"data"`
 }

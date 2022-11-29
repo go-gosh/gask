@@ -34,12 +34,10 @@ func setupDatabase() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("<file:%s> %w", database.File, err)
 	}
-	if database.Debug {
-		db = db.Debug()
-	}
-	if err := db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{}); err != nil {
-		return nil, err
-	}
+	//if database.Debug {
+	db = db.Debug()
+	//}
+	_ = db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{})
 	return db, nil
 }
 

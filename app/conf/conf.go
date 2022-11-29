@@ -14,7 +14,7 @@ var config = Config{
 	Port: 8080,
 	Database: database{
 		File:  path.Join(homeDir, "gask", "data.sqlite3"),
-		Debug: false,
+		Debug: true,
 	},
 }
 

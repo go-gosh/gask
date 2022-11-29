@@ -37,18 +37,22 @@ func (c checkpoint) Create(ctx context.Context, create *CheckpointCreate) (*Chec
 	if err != nil {
 		return nil, err
 	}
-	return &CheckpointView{
-			Checkpoint: entity,
-		}, c.db.Transaction(func(tx *gorm.DB) error {
-			err := tx.Create(&entity).Error
-			if err != nil {
-				return err
-			}
-			if entity.CheckedAt != nil {
-				return c.callbackMilestone(tx, entity.MilestoneId)
-			}
-			return nil
-		})
+	err = c.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Create(&entity).Error
+		if err != nil {
+			return err
+		}
+		if entity.CheckedAt != nil {
+			return c.callbackMilestone(tx, entity.MilestoneId)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	v := CheckpointView{}
+	err = copier.Copy(&v, &entity)
+	return &v, err
 }
 
 func (c checkpoint) FindByPage(ctx context.Context, query *CheckpointQuery) (*repo.Paginator[CheckpointView], error) {
@@ -99,7 +103,7 @@ func (c checkpoint) UpdateById(ctx context.Context, id uint, updated *Checkpoint
 
 func (c checkpoint) callbackMilestone(tx *gorm.DB, milestoneId uint) error {
 	sub := tx.Model(&model.Checkpoint{}).Select("SUM(`checkpoints`.`point`) as point").Where("`checkpoints`.`milestone_id` = ? AND `checkpoints`.`checked_at` IS NOT NULL", milestoneId)
-	return tx.Model(model.Milestone{}).Where("id = ?", milestoneId).Update("progress", sub).Error
+	return tx.Model(model.Milestone{}).Where("id = ?", milestoneId).Update("progress", gorm.Expr("IFNULL((?),0)", sub)).Error
 }
 
 func NewCheckpoint(db *gorm.DB) ICheckpoint {

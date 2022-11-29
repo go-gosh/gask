@@ -11,3 +11,7 @@ type Milestone struct {
 	Deadline    *time.Time
 	Checkpoints []*Checkpoint
 }
+
+func (m Milestone) IsDeleted() bool {
+	return m.DeletedAt.Valid
+}

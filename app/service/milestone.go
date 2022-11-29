@@ -35,7 +35,16 @@ func (m milestone) Create(ctx context.Context, create MilestoneCreate) (*Milesto
 	if err := copier.Copy(&entity, &create); err != nil {
 		return nil, err
 	}
-	return &MilestoneView{Milestone: entity}, m.db.WithContext(ctx).Create(&entity).Error
+	err := m.db.WithContext(ctx).Create(&entity).Error
+	if err != nil {
+		return nil, err
+	}
+	var result MilestoneView
+	err = copier.Copy(&result, &entity)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo.Paginator[MilestoneView], error) {
@@ -48,7 +57,15 @@ func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo
 }
 
 func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
-	return repo.WhereInIds(m.db.WithContext(ctx), id, ids...).Delete(&model.Milestone{}).Error
+	r := repo.WhereInIds(m.db.WithContext(ctx), id, ids...).Delete(&model.Milestone{})
+	err := r.Error
+	if err != nil {
+		return err
+	}
+	if r.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {

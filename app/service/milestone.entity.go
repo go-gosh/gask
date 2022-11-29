@@ -5,21 +5,20 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
 )
 
 type MilestoneCreate struct {
-	Point     int        `validate:"gt=0"`
-	Title     string     `validate:"required"`
-	StartedAt time.Time  `validate:"required"`
-	Deadline  *time.Time `validate:"omitempty,gtefield=StartedAt"`
+	Point     int        `binding:"gt=0"`
+	Title     string     `binding:"required"`
+	StartedAt time.Time  `binding:"required"`
+	Deadline  *time.Time `binding:"omitempty,gtefield=StartedAt"`
 }
 
 type MilestoneQuery struct {
 	repo.Pager
-	OrderBy  []string
-	HideDone bool
+	OrderBy  []string `form:"orderBy"`
+	HideDone bool     `form:"withUndo"`
 	scopes   []func(db *gorm.DB) *gorm.DB
 }
 
@@ -47,7 +46,19 @@ func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 }
 
 type MilestoneView struct {
-	model.Milestone
+	ID        uint       `json:"id"`
+	Point     int        `json:"point"`
+	Progress  int        `json:"progress"`
+	Title     string     `json:"title"`
+	StartedAt time.Time  `json:"startedAt"`
+	Deadline  *time.Time `json:"deadline"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	IsDeleted bool       `json:"isDeleted" gorm:"-"`
+}
+
+func (MilestoneView) TableName() string {
+	return "milestones"
 }
 
 type MilestoneUpdate struct {

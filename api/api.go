@@ -1,14 +1,24 @@
 package api
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"github.com/go-gosh/gask/api/resource"
+	"github.com/go-gosh/gask/app/conf"
 	"github.com/go-gosh/gask/app/service"
 )
 
 func New(milestone service.IMilestone, checkpoint service.ICheckpoint) *gin.Engine {
+	if conf.GetConfig().Database.Debug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	engine := gin.Default()
-
+	_ = engine.SetTrustedProxies(nil)
+	engine.Use(cors.Default())
+	resource.Setup(engine)
 	apiV1 := engine.Group("/api/v1")
 	m := &Milestone{svc: milestone}
 	apiV1.GET("/milestone", m.Paginate)

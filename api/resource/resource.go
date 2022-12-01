@@ -3,7 +3,6 @@ package resource
 import (
 	"embed"
 	"io/fs"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +21,6 @@ type r struct {
 }
 
 func (r r) Open(name string) (fs.File, error) {
-	log.Println(name)
 	return file.Open("static/" + name)
 }
 

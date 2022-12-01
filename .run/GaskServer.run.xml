@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" name="GaskServer" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="gask" />
+    <working_directory value="$PROJECT_DIR$" />
+    <useCustomBuildTags value="true" />
+    <parameters value="server" />
+    <kind value="PACKAGE" />
+    <package value="github.com/go-gosh/gask/cmd/gask" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/gask/main.go" />
+    <method v="2" />
+  </configuration>
+</component>

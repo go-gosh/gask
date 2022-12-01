@@ -6,6 +6,7 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-playground/validator/v10 v10.11.1
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/jedib0t/go-pretty/v6 v6.4.2
 	github.com/jinzhu/copier v0.3.5
 	github.com/json-iterator/go v1.1.12

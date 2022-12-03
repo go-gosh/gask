@@ -5,40 +5,14 @@ import (
 
 	"gorm.io/gorm"
 
-	tk "github.com/go-gosh/gask/app/common/toolkit"
 	"github.com/go-gosh/gask/app/repo"
 )
 
 type CheckpointUpdate struct {
-	IsChecked *bool      `json:"isChecked"`
-	Point     *int       `json:"point"`
-	Content   *string    `json:"content"`
+	Point     int        `json:"point"`
+	Content   string     `json:"content"`
 	CheckedAt *time.Time `json:"checkedAt"`
-	JoinedAt  *time.Time `json:"joinedAt"`
-}
-
-func (u CheckpointUpdate) updateDB() map[string]any {
-	m := make(map[string]any)
-	if u.IsChecked != nil {
-		if u.CheckedAt == nil {
-			u.CheckedAt = tk.Pointer(time.Now())
-		}
-		if *u.IsChecked {
-			m["checked_at"] = u.CheckedAt
-		} else {
-			m["checked_at"] = nil
-		}
-	}
-	if u.Point != nil {
-		m["point"] = *u.Point
-	}
-	if u.Content != nil {
-		m["content"] = *u.Content
-	}
-	if u.JoinedAt != nil {
-		m["joined_at"] = *u.JoinedAt
-	}
-	return m
+	JoinedAt  time.Time  `json:"joinedAt"`
 }
 
 type CheckpointCreate struct {

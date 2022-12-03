@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
@@ -93,7 +94,8 @@ func (c checkpoint) UpdateById(ctx context.Context, id uint, updated *Checkpoint
 		return err
 	}
 	return c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&model.Checkpoint{}).Where("`id` = ?", id).Updates(updated.updateDB()).Error
+		log.Printf("%#v", *updated)
+		err := tx.Table("checkpoints").Where("`id` = ?", id).Select("*").Updates(updated).Error
 		if err != nil {
 			return err
 		}

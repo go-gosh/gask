@@ -78,5 +78,5 @@ func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error)
 }
 
 func (m milestone) UpdateById(ctx context.Context, id uint, updated *MilestoneUpdate) error {
-	return m.db.WithContext(ctx).Model(&model.Milestone{}).Where("`id` = ?", id).Updates(updated.updateDB()).Error
+	return m.db.WithContext(ctx).Table("milestones").Select("*").Where("`id` = ?", id).Updates(updated).Error
 }

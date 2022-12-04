@@ -30,7 +30,7 @@ func (q *MilestoneQuery) add(scope func(db *gorm.DB) *gorm.DB) *MilestoneQuery {
 func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 	if len(q.OrderBy) == 0 {
 		q.add(func(db *gorm.DB) *gorm.DB {
-			return db.Order(repo.DefaultOrderBy)
+			return db.Order("progress<point desc,deadline is null,deadline,started_at desc,id desc")
 		})
 	} else {
 		q.add(func(db *gorm.DB) *gorm.DB {

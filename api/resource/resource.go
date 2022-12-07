@@ -29,7 +29,7 @@ func Setup(engine *gin.Engine) {
 	engine.GET("/", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "text/html; charset=utf-8", index)
 	})
-	engine.Any("/favicon.ico", func(ctx *gin.Context) {
+	engine.GET("/favicon.ico", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "text/plain", favicon)
 	})
 }

@@ -37,7 +37,7 @@ func setupDatabase() (*gorm.DB, error) {
 	if database.Debug {
 		db = db.Debug()
 	}
-	_ = db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{})
+	_ = db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{}, &model.MilestoneTag{})
 	return db, nil
 }
 

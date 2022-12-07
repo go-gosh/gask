@@ -31,7 +31,8 @@ func (s *_testCheckpointApiSuite) SetupTest() {
 	s.Require().NoError(db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{}))
 	milestone := service.NewMilestone(db)
 	checkpoint := service.NewCheckpoint(db)
-	s.router = New(milestone, checkpoint)
+	milestoneTag := service.NewMilestoneTag(db)
+	s.router = New(milestone, checkpoint, milestoneTag)
 	s.timestamp = time.Date(2022, 10, 21, 10, 28, 0, 0, time.Local)
 	s.initData = []model.Milestone{
 		{

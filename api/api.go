@@ -9,7 +9,7 @@ import (
 	"github.com/go-gosh/gask/app/service"
 )
 
-func New(milestone service.IMilestone, checkpoint service.ICheckpoint) *gin.Engine {
+func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestoneTag service.IMilestoneTag) *gin.Engine {
 	if conf.GetConfig().Database.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -33,5 +33,10 @@ func New(milestone service.IMilestone, checkpoint service.ICheckpoint) *gin.Engi
 	apiV1.GET("/checkpoint/:id", c.Retrieve)
 	apiV1.PUT("/checkpoint/:id", c.Update)
 	apiV1.DELETE("/checkpoint/:id", c.Delete)
+
+	mt := &MilestoneTag{svc: milestoneTag}
+	apiV1.GET("/milestone-tag", mt.Paginate)
+	apiV1.POST("/milestone-tag", mt.Create)
+	apiV1.DELETE("/milestone/:id/tag/:name", mt.Delete)
 	return engine
 }

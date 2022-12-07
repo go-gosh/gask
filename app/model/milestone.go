@@ -10,6 +10,7 @@ type Milestone struct {
 	StartedAt   time.Time `gorm:"not null"`
 	Deadline    *time.Time
 	Checkpoints []*Checkpoint
+	Tags        []*MilestoneTag
 }
 
 func (m Milestone) IsDeleted() bool {

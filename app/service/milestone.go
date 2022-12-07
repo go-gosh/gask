@@ -48,7 +48,7 @@ func (m milestone) Create(ctx context.Context, create MilestoneCreate) (*Milesto
 }
 
 func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo.Paginator[MilestoneView], error) {
-	db := m.db.Session(&gorm.Session{}).Model(&model.Milestone{})
+	db := m.db.Session(&gorm.Session{}).Model(&model.Milestone{}).Preload("Tags")
 	// build query conditions.
 	if query != nil {
 		db = query.injectDB(db)
@@ -70,7 +70,7 @@ func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
 
 func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {
 	result := MilestoneView{}
-	err := m.db.WithContext(ctx).Model(&model.Milestone{}).First(&result, id).Error
+	err := m.db.WithContext(ctx).Model(&model.Milestone{}).Preload("Tags").First(&result, id).Error
 	if err != nil {
 		return nil, err
 	}

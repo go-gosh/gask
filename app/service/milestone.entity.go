@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/go-gosh/gask/app/model"
 	"github.com/go-gosh/gask/app/repo"
 )
 
@@ -46,15 +47,16 @@ func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 }
 
 type MilestoneView struct {
-	ID        uint       `json:"id"`
-	Point     int        `json:"point"`
-	Progress  int        `json:"progress"`
-	Title     string     `json:"title"`
-	StartedAt time.Time  `json:"startedAt"`
-	Deadline  *time.Time `json:"deadline"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	IsDeleted bool       `json:"isDeleted" gorm:"-"`
+	ID        uint                  `json:"id"`
+	Point     int                   `json:"point"`
+	Progress  int                   `json:"progress"`
+	Title     string                `json:"title"`
+	StartedAt time.Time             `json:"startedAt"`
+	Deadline  *time.Time            `json:"deadline"`
+	CreatedAt time.Time             `json:"createdAt"`
+	UpdatedAt time.Time             `json:"updatedAt"`
+	IsDeleted bool                  `json:"isDeleted" gorm:"-"`
+	Tags      []*model.MilestoneTag `json:"tags" gorm:"foreignKey:MilestoneID"`
 }
 
 func (MilestoneView) TableName() string {

@@ -22,7 +22,8 @@ var serverCmd = &cobra.Command{
 		}
 		m := service.NewMilestone(db)
 		c := service.NewCheckpoint(db)
-		return api.New(m, c).Run(fmt.Sprintf(":%d", conf.GetConfig().Port))
+		t := service.NewMilestoneTag(db)
+		return api.New(m, c, t).Run(fmt.Sprintf(":%d", conf.GetConfig().Port))
 	},
 }
 

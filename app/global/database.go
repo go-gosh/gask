@@ -19,7 +19,8 @@ var (
 )
 
 func setupDatabase() (*gorm.DB, error) {
-	database := conf.GetConfig().Database
+	config := conf.GetConfig()
+	database := config.Database
 	dir := path.Dir(database.File)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, os.ModePerm)
@@ -34,7 +35,7 @@ func setupDatabase() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("<file:%s> %w", database.File, err)
 	}
-	if database.Debug {
+	if config.Debug || database.Debug {
 		db = db.Debug()
 	}
 	_ = db.AutoMigrate(&model.Milestone{}, &model.Checkpoint{}, &model.MilestoneTag{})

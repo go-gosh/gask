@@ -13,7 +13,8 @@ import (
 )
 
 func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestoneTag service.IMilestoneTag) *gin.Engine {
-	if conf.GetConfig().Database.Debug {
+	config := conf.GetConfig()
+	if config.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
@@ -22,7 +23,7 @@ func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestone
 	_ = engine.SetTrustedProxies(nil)
 	engine.Use(cors.Default())
 	resource.Setup(engine)
-	if conf.GetConfig().Database.Debug {
+	if config.Debug || config.SwaggerDoc {
 		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 

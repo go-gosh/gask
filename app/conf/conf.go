@@ -2,7 +2,7 @@ package conf
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -13,8 +13,7 @@ var homeDir, _ = os.UserHomeDir()
 var config = Config{
 	Port: 8080,
 	Database: database{
-		File:  path.Join(homeDir, "gask", "data.sqlite3"),
-		Debug: false,
+		File: filepath.Join(homeDir, "gask", "data.sqlite3"),
 	},
 }
 
@@ -24,8 +23,11 @@ type database struct {
 }
 
 type Config struct {
-	Port     int      `json:"port" yaml:"port"`
-	Database database `json:"database" yaml:"database"`
+	Debug      bool     `json:"debug" yaml:"debug"`
+	SwaggerDoc bool     `json:"swaggerDoc" yaml:"swaggerDoc"`
+	Port       int      `json:"port" yaml:"port"`
+	Host       string   `json:"host" yaml:"host"`
+	Database   database `json:"database" yaml:"database"`
 }
 
 func load() {
@@ -37,7 +39,7 @@ func load() {
 		}
 	}
 	if viper.GetBool("debug") {
-		config.Database.Debug = true
+		config.Debug = true
 	}
 }
 

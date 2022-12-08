@@ -3,10 +3,13 @@ package api
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/go-gosh/gask/api/resource"
 	"github.com/go-gosh/gask/app/conf"
 	"github.com/go-gosh/gask/app/service"
+	_ "github.com/go-gosh/gask/docs"
 )
 
 func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestoneTag service.IMilestoneTag) *gin.Engine {
@@ -19,6 +22,10 @@ func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestone
 	_ = engine.SetTrustedProxies(nil)
 	engine.Use(cors.Default())
 	resource.Setup(engine)
+	if conf.GetConfig().Database.Debug {
+		engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
+
 	apiV1 := engine.Group("/api/v1")
 	m := &Milestone{svc: milestone}
 	apiV1.GET("/milestone", m.Paginate)
@@ -37,6 +44,7 @@ func New(milestone service.IMilestone, checkpoint service.ICheckpoint, milestone
 	mt := &MilestoneTag{svc: milestoneTag}
 	apiV1.GET("/milestone-tag", mt.Paginate)
 	apiV1.POST("/milestone-tag", mt.Create)
+	apiV1.GET("/milestone/:id/tag", mt.PaginateByMilestone)
 	apiV1.DELETE("/milestone/:id/tag/:name", mt.Delete)
 	return engine
 }

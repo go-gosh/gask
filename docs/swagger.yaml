@@ -1,0 +1,631 @@
+basePath: /api/v1
+definitions:
+  github.com_go-gosh_gask_app_repo.Paginator-model_MilestoneTag:
+    properties:
+      data:
+        items:
+          properties:
+            id:
+              type: integer
+            milestoneId:
+              type: integer
+            name:
+              type: string
+          type: object
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.MilestoneTag:
+    properties:
+      id:
+        type: integer
+      milestoneId:
+        type: integer
+      name:
+        type: string
+    type: object
+  repo.Paginator-service_CheckpointView:
+    properties:
+      data:
+        items:
+          properties:
+            checkedAt:
+              type: string
+            content:
+              type: string
+            createdAt:
+              type: string
+            deletedAt:
+              type: string
+            diff:
+              type: number
+            id:
+              type: integer
+            joinedAt:
+              type: string
+            milestoneId:
+              type: integer
+            point:
+              type: integer
+            updatedAt:
+              type: string
+          type: object
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  repo.Paginator-service_MilestoneView:
+    properties:
+      data:
+        items:
+          properties:
+            createdAt:
+              type: string
+            deadline:
+              type: string
+            id:
+              type: integer
+            isDeleted:
+              type: boolean
+            point:
+              type: integer
+            progress:
+              type: integer
+            startedAt:
+              type: string
+            tags:
+              items:
+                $ref: '#/definitions/model.MilestoneTag'
+              type: array
+            title:
+              type: string
+            updatedAt:
+              type: string
+          type: object
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  service.CheckpointCreate:
+    properties:
+      checkedAt:
+        type: string
+      content:
+        type: string
+      joinedAt:
+        type: string
+      milestoneId:
+        type: integer
+      point:
+        type: integer
+    required:
+    - content
+    - joinedAt
+    - milestoneId
+    type: object
+  service.CheckpointUpdate:
+    properties:
+      checkedAt:
+        type: string
+      content:
+        type: string
+      joinedAt:
+        type: string
+      point:
+        type: integer
+    type: object
+  service.CheckpointView:
+    properties:
+      checkedAt:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      diff:
+        type: number
+      id:
+        type: integer
+      joinedAt:
+        type: string
+      milestoneId:
+        type: integer
+      point:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  service.MilestoneCreate:
+    properties:
+      deadline:
+        type: string
+      point:
+        type: integer
+      startedAt:
+        type: string
+      title:
+        type: string
+    required:
+    - startedAt
+    - title
+    type: object
+  service.MilestoneUpdate:
+    properties:
+      deadline:
+        type: string
+      point:
+        type: integer
+      startedAt:
+        type: string
+      title:
+        type: string
+    type: object
+  service.MilestoneView:
+    properties:
+      createdAt:
+        type: string
+      deadline:
+        type: string
+      id:
+        type: integer
+      isDeleted:
+        type: boolean
+      point:
+        type: integer
+      progress:
+        type: integer
+      startedAt:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/model.MilestoneTag'
+        type: array
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  views.JsonResult:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: Gask API
+  version: "1.0"
+paths:
+  /checkpoint:
+    get:
+      consumes:
+      - application/json
+      description: Paginate data of Checkpoint
+      parameters:
+      - in: query
+        name: milestoneId
+        type: integer
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      - in: query
+        name: timestamp
+        type: string
+      - in: query
+        name: withMilestone
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/repo.Paginator-service_CheckpointView'
+                  - properties:
+                      data:
+                        items:
+                          $ref: '#/definitions/service.CheckpointView'
+                        type: array
+                    type: object
+              type: object
+      summary: Paginate Checkpoint
+      tags:
+      - checkpoint
+    post:
+      consumes:
+      - application/json
+      description: Create a Checkpoint
+      parameters:
+      - description: data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CheckpointCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.CheckpointView'
+              type: object
+      summary: Create Checkpoint
+      tags:
+      - checkpoint
+  /checkpoint/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Checkpoint
+      parameters:
+      - description: checkpoint id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/views.JsonResult'
+      summary: Delete Checkpoint
+      tags:
+      - checkpoint
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a Checkpoint
+      parameters:
+      - description: checkpoint id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.CheckpointView'
+              type: object
+      summary: Retrieve Checkpoint
+      tags:
+      - checkpoint
+    put:
+      consumes:
+      - application/json
+      description: Update a Checkpoint
+      parameters:
+      - description: checkpoint id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CheckpointUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/views.JsonResult'
+      summary: Update Checkpoint
+      tags:
+      - checkpoint
+  /milestone:
+    get:
+      consumes:
+      - application/json
+      description: Paginate data of Milestone
+      parameters:
+      - in: query
+        name: hideDone
+        type: boolean
+      - in: query
+        items:
+          type: string
+        name: orderBy
+        type: array
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/repo.Paginator-service_MilestoneView'
+                  - properties:
+                      data:
+                        items:
+                          $ref: '#/definitions/service.MilestoneView'
+                        type: array
+                    type: object
+              type: object
+      summary: Paginate Milestone
+      tags:
+      - milestone
+    post:
+      consumes:
+      - application/json
+      description: Create a Milestone
+      parameters:
+      - description: data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.MilestoneCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.MilestoneView'
+              type: object
+      summary: Create Milestone
+      tags:
+      - milestone
+  /milestone-tag:
+    get:
+      consumes:
+      - application/json
+      description: Paginate data of MilestoneTag
+      parameters:
+      - in: query
+        name: id
+        type: integer
+      - in: query
+        name: milestoneId
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/github.com_go-gosh_gask_app_repo.Paginator-model_MilestoneTag'
+                  - properties:
+                      data:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+              type: object
+      summary: Paginate MilestoneTag
+      tags:
+      - milestone-tag
+    post:
+      consumes:
+      - application/json
+      description: Create a MilestoneTag
+      parameters:
+      - description: data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.MilestoneTag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Create MilestoneTag
+      tags:
+      - milestone-tag
+  /milestone/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Milestone
+      parameters:
+      - description: milestone id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/views.JsonResult'
+      summary: Delete Milestone
+      tags:
+      - milestone
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a Milestone
+      parameters:
+      - description: milestone id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.MilestoneView'
+              type: object
+      summary: Retrieve Milestone
+      tags:
+      - milestone
+    put:
+      consumes:
+      - application/json
+      description: Update a Milestone
+      parameters:
+      - description: milestone id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.MilestoneUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/views.JsonResult'
+      summary: Update Milestone
+      tags:
+      - milestone
+  /milestone/{id}/tag:
+    get:
+      consumes:
+      - application/json
+      description: Paginate MilestoneTag by milestone id
+      parameters:
+      - description: milestone id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: name
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/views.JsonResult'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/github.com_go-gosh_gask_app_repo.Paginator-model_MilestoneTag'
+                  - properties:
+                      data:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+              type: object
+      summary: Paginate MilestoneTag by milestone id
+      tags:
+      - milestone-tag
+  /milestone/{id}/tag/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a MilestoneTag
+      parameters:
+      - description: milestone id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: tag name
+        in: path
+        name: name
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/views.JsonResult'
+      summary: Delete MilestoneTag
+      tags:
+      - milestone-tag
+swagger: "2.0"

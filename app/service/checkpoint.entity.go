@@ -24,17 +24,16 @@ type CheckpointCreate struct {
 }
 
 type CheckpointView struct {
-	ID          uint          `json:"id"`
-	Point       int           `json:"point"`
-	MilestoneId uint          `json:"milestoneId"`
-	Content     string        `json:"content"`
-	JoinedAt    time.Time     `json:"joinedAt"`
-	CheckedAt   *time.Time    `json:"checkedAt"`
-	Milestone   MilestoneView `json:"milestone"`
-	Diff        float64       `json:"diff"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
-	DeletedAt   *time.Time    `json:"deletedAt"`
+	ID          uint       `json:"id"`
+	Point       int        `json:"point"`
+	MilestoneId uint       `json:"milestoneId"`
+	Content     string     `json:"content"`
+	JoinedAt    time.Time  `json:"joinedAt"`
+	CheckedAt   *time.Time `json:"checkedAt"`
+	Diff        float64    `json:"diff"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	DeletedAt   *time.Time `json:"deletedAt"`
 }
 
 func (CheckpointView) TableName() string {

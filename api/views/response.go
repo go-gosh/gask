@@ -20,14 +20,14 @@ func Error(ctx *gin.Context, code int, err error) {
 }
 
 func Response(ctx *gin.Context, code int, message string, data any) {
-	ctx.JSON(http.StatusOK, response{
+	ctx.JSON(http.StatusOK, JsonResult{
 		Code:    code,
 		Message: message,
 		Data:    data,
 	})
 }
 
-type response struct {
+type JsonResult struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`

@@ -20,30 +20,30 @@ type MilestoneQuery struct {
 	repo.Pager
 	OrderBy  []string `form:"orderBy"`
 	HideDone bool     `form:"withUndo"`
-	scopes   []func(db *gorm.DB) *gorm.DB
-}
-
-func (q *MilestoneQuery) add(scope func(db *gorm.DB) *gorm.DB) *MilestoneQuery {
-	q.scopes = append(q.scopes, scope)
-	return q
+	Tag      string   `form:"tag"`
 }
 
 func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 	if len(q.OrderBy) == 0 {
-		q.add(func(db *gorm.DB) *gorm.DB {
-			return db.Order("progress<point desc,deadline is null,deadline,started_at desc,id desc")
-		})
-	} else {
-		q.add(func(db *gorm.DB) *gorm.DB {
-			return db.Order(repo.ArrayToQueryOrder(q.OrderBy))
-		})
+		q.OrderBy = append(
+			q.OrderBy,
+			"`milestones`.`progress` < `milestones`.`point` desc",
+			"`milestones`.`deadline` is null",
+			"`milestones`.`deadline`,`milestones`.`started_at` desc",
+			"`milestones`.`id` desc",
+		)
 	}
+	db = db.Order(repo.ArrayToQueryOrder(q.OrderBy))
+
 	if q.HideDone {
-		q.scopes = append(q.scopes, func(db *gorm.DB) *gorm.DB {
-			return db.Where("point>progress")
-		})
+		db = db.Where("`milestones`.`point` > `milestones`.`progress`")
 	}
-	return db.Scopes(q.scopes...)
+	if q.Tag != "" {
+		db = db.Select("`milestones`.*").
+			Joins("INNER JOIN `milestone_tags` ON `milestones`.`id` = `milestone_tags`.`milestone_id`").
+			Where("`milestone_tags`.`name` = ?", q.Tag)
+	}
+	return db
 }
 
 type MilestoneView struct {

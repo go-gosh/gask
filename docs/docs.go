@@ -286,6 +286,11 @@ const docTemplate = `{
                         "type": "integer",
                         "name": "pageSize",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "tag",
+                        "in": "query"
                     }
                 ],
                 "responses": {

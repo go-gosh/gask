@@ -375,6 +375,9 @@ paths:
       - in: query
         name: pageSize
         type: integer
+      - in: query
+        name: tag
+        type: string
       produces:
       - application/json
       responses:

@@ -57,15 +57,20 @@ func (m milestone) FindByPage(ctx context.Context, query *MilestoneQuery) (*repo
 }
 
 func (m milestone) DeleteById(ctx context.Context, id uint, ids ...uint) error {
-	r := repo.WhereInIds(m.db.WithContext(ctx), id, ids...).Delete(&model.Milestone{})
-	err := r.Error
-	if err != nil {
-		return err
-	}
-	if r.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+	return m.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		r := repo.WhereInIds(tx, id, ids...).Delete(&model.Milestone{})
+		err := r.Error
+		if err != nil {
+			return err
+		}
+		if r.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		if len(ids) != 0 {
+			return tx.Where("`milestone_tags`.`milestone_id` in (?)", append(ids, id)).Delete(&model.MilestoneTag{}).Error
+		}
+		return tx.Where("`milestone_tags`.`milestone_id` = ?", id).Delete(&model.MilestoneTag{}).Error
+	})
 }
 
 func (m milestone) OneById(ctx context.Context, id uint) (*MilestoneView, error) {

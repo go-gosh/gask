@@ -104,8 +104,9 @@ func (c checkpoint) UpdateById(ctx context.Context, id uint, updated *Checkpoint
 }
 
 func (c checkpoint) callbackMilestone(tx *gorm.DB, milestoneId uint) error {
+	subTotal := tx.Model(&model.Checkpoint{}).Select("SUM(`checkpoints`.`point`) as point").Where("`checkpoints`.`milestone_id` = ?", milestoneId)
 	sub := tx.Model(&model.Checkpoint{}).Select("SUM(`checkpoints`.`point`) as point").Where("`checkpoints`.`milestone_id` = ? AND `checkpoints`.`checked_at` IS NOT NULL", milestoneId)
-	return tx.Model(model.Milestone{}).Where("id = ?", milestoneId).Update("progress", gorm.Expr("IFNULL((?),0)", sub)).Error
+	return tx.Model(model.Milestone{}).Where("id = ?", milestoneId).Update("point", gorm.Expr("IFNULL((?),0)", subTotal)).Update("progress", gorm.Expr("IFNULL((?),0)", sub)).Error
 }
 
 func NewCheckpoint(db *gorm.DB) ICheckpoint {

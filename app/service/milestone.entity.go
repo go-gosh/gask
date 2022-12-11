@@ -10,7 +10,6 @@ import (
 )
 
 type MilestoneCreate struct {
-	Point     int        `binding:"gt=0"`
 	Title     string     `binding:"required"`
 	StartedAt time.Time  `binding:"required"`
 	Deadline  *time.Time `binding:"omitempty,gtefield=StartedAt"`
@@ -64,7 +63,6 @@ func (MilestoneView) TableName() string {
 }
 
 type MilestoneUpdate struct {
-	Point     int
 	Title     string
 	StartedAt time.Time
 	Deadline  *time.Time

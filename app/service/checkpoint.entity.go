@@ -9,10 +9,10 @@ import (
 )
 
 type CheckpointUpdate struct {
-	Point     int        `json:"point"`
-	Content   string     `json:"content"`
-	CheckedAt *time.Time `json:"checkedAt"`
-	JoinedAt  time.Time  `json:"joinedAt"`
+	Point     int        `binding:"gte=0" json:"point"`
+	Content   string     `binding:"required" json:"content"`
+	JoinedAt  time.Time  `binding:"required" json:"joinedAt"`
+	CheckedAt *time.Time `binding:"omitempty,gtefield=JoinedAt" json:"checkedAt"`
 }
 
 type CheckpointCreate struct {

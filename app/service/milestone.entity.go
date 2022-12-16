@@ -10,9 +10,9 @@ import (
 )
 
 type MilestoneCreate struct {
-	Title     string     `binding:"required"`
-	StartedAt time.Time  `binding:"required"`
-	Deadline  *time.Time `binding:"omitempty,gtefield=StartedAt"`
+	Title     string     `binding:"required" json:"title"`
+	StartedAt time.Time  `binding:"required" json:"startedAt"`
+	Deadline  *time.Time `binding:"omitempty,gtefield=StartedAt" json:"deadline"`
 }
 
 type MilestoneQuery struct {
@@ -54,7 +54,6 @@ type MilestoneView struct {
 	Deadline  *time.Time            `json:"deadline"`
 	CreatedAt time.Time             `json:"createdAt"`
 	UpdatedAt time.Time             `json:"updatedAt"`
-	IsDeleted bool                  `json:"isDeleted" gorm:"-"`
 	Tags      []*model.MilestoneTag `json:"tags" gorm:"foreignKey:MilestoneID"`
 }
 

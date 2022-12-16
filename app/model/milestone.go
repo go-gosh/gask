@@ -4,6 +4,7 @@ import "time"
 
 type Milestone struct {
 	Model
+	IsFixed     bool      `gorm:"not null"`
 	Point       int       `gorm:"not null"`
 	Progress    int       `gorm:"not null"`
 	Title       string    `gorm:"not null"`

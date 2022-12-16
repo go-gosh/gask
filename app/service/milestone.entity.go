@@ -10,6 +10,7 @@ import (
 )
 
 type MilestoneCreate struct {
+	IsFixed   bool       `json:"isFixed"`
 	Title     string     `binding:"required" json:"title"`
 	StartedAt time.Time  `binding:"required" json:"startedAt"`
 	Deadline  *time.Time `binding:"omitempty,gtefield=StartedAt" json:"deadline"`
@@ -47,6 +48,7 @@ func (q *MilestoneQuery) injectDB(db *gorm.DB) *gorm.DB {
 
 type MilestoneView struct {
 	ID        uint                  `json:"id"`
+	IsFixed   bool                  `json:"isFixed"`
 	Point     int                   `json:"point"`
 	Progress  int                   `json:"progress"`
 	Title     string                `json:"title"`
